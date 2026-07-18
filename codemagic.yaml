@@ -21,8 +21,8 @@ workflows:
           fi
       - name: Bump Android compileSdk/targetSdk to 35
         script: |
-          sed -i 's/flutter.compileSdkVersion/35/' android/app/build.gradle
-          sed -i 's/flutter.targetSdkVersion/35/' android/app/build.gradle
+          sed -i '' 's/flutter.compileSdkVersion/35/' android/app/build.gradle
+          sed -i '' 's/flutter.targetSdkVersion/35/' android/app/build.gradle
       - name: Get Flutter packages
         script: flutter pub get
       - name: Build APK (debug-signed, for direct install / testing)
