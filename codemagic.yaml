@@ -5,10 +5,8 @@ workflows:
     environment:
       flutter: stable
       vars:
-        # Set these as "Environment variables" in Codemagic app settings
-        # (Environment variables tab), NOT committed to git.
-        SUPABASE_URL: $SUPABASE_URL
-        SUPABASE_ANON_KEY: $SUPABASE_ANON_KEY
+        SUPABASE_URL: "https://aqxgigbomvqjuqadlohx.supabase.co"
+        SUPABASE_ANON_KEY: "sb_publishable_n6OfKO-d3fmICCWJn6wtXg_KKAucpaR"
     scripts:
       - name: Write .env file
         script: |
