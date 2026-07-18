@@ -25,8 +25,12 @@ workflows:
           if [ ! -f "$GRADLE_FILE" ]; then
             GRADLE_FILE="android/app/build.gradle"
           fi
-          sed -i '' 's/flutter.compileSdkVersion/36/' "$GRADLE_FILE"
-          sed -i '' 's/flutter.targetSdkVersion/36/' "$GRADLE_FILE"
+          echo "Before:"
+          grep -n "compileSdk\|targetSdk" "$GRADLE_FILE"
+          sed -i '' -E 's/^([[:space:]]*)compileSdk[[:space:]]*=.*/\1compileSdk = 36/' "$GRADLE_FILE"
+          sed -i '' -E 's/^([[:space:]]*)targetSdk[[:space:]]*=.*/\1targetSdk = 36/' "$GRADLE_FILE"
+          echo "After:"
+          grep -n "compileSdk\|targetSdk" "$GRADLE_FILE"
       - name: Get Flutter packages
         script: flutter pub get
       - name: Build APK (debug-signed, for direct install / testing)
