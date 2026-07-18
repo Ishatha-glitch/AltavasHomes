@@ -31,6 +31,10 @@ workflows:
           sed -i '' -E 's/^([[:space:]]*)targetSdk[[:space:]]*=.*/\1targetSdk = 36/' "$GRADLE_FILE"
           echo "After:"
           grep -n "compileSdk\|targetSdk" "$GRADLE_FILE"
+          echo "Root gradle files:"
+          find android -maxdepth 2 -iname "build.gradle*"
+          echo "settings.gradle content:"
+          cat android/settings.gradle.kts 2>/dev/null || cat android/settings.gradle 2>/dev/null
       - name: Get Flutter packages
         script: flutter pub get
       - name: Build APK (debug-signed, for direct install / testing)
