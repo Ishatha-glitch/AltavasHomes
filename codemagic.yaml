@@ -19,14 +19,14 @@ workflows:
           if [ ! -d "android" ]; then
             flutter create --platforms=android,ios,web --project-name altavashomes --org com.altavashomes .
           fi
-      - name: Bump Android compileSdk/targetSdk to 35
+      - name: Bump Android compileSdk/targetSdk to 36
         script: |
           GRADLE_FILE="android/app/build.gradle.kts"
           if [ ! -f "$GRADLE_FILE" ]; then
             GRADLE_FILE="android/app/build.gradle"
           fi
-          sed -i '' 's/flutter.compileSdkVersion/35/' "$GRADLE_FILE"
-          sed -i '' 's/flutter.targetSdkVersion/35/' "$GRADLE_FILE"
+          sed -i '' 's/flutter.compileSdkVersion/36/' "$GRADLE_FILE"
+          sed -i '' 's/flutter.targetSdkVersion/36/' "$GRADLE_FILE"
       - name: Get Flutter packages
         script: flutter pub get
       - name: Build APK (debug-signed, for direct install / testing)
