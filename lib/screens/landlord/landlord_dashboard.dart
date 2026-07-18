@@ -28,7 +28,7 @@ class _LandlordDashboardState extends State<LandlordDashboard> {
 
     final data = await Db.client
         .from('properties')
-        .select('*, leases(id, tenant_id, monthly_rent, active, profiles(full_name))')
+        .select('*, leases(id, tenant_id, monthly_rent, active, profiles!leases_tenant_id_fkey(full_name))')
         .eq('landlord_id', profile['id'])
         .order('created_at', ascending: false);
 
