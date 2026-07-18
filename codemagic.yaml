@@ -1,0 +1,105 @@
+workflows:
+  android-workflow:
+    name: AltavasHomes Android
+    max_build_duration: 60
+    environment:
+      flutter: stable
+      vars:
+        # Set these as "Environment variables" in Codemagic app settings
+        # (Environment variables tab), NOT committed to git.
+        SUPABASE_URL: $SUPABASE_URL
+        SUPABASE_ANON_KEY: $SUPABASE_ANON_KEY
+    scripts:
+      - name: Write .env file
+        script: |
+          echo "SUPABASE_URL=$SUPABASE_URL" > .env
+          echo "SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY" >> .env
+      - name: Generate native platform folders if missing
+        script: |
+          if [ ! -d "android" ]; then
+            flutter create --platforms=android,ios,web --project-name altavashomes --org com.altavashomes .
+          fi
+      - name: Get Flutter packages
+        script: flutter pub get
+      - name: Build APK (debug-signed, for direct install / testing)
+        script: flutter build apk --release
+      - name: Build App Bundle (for Play Store)
+        script: flutter build appbundle --release
+    artifacts:
+      - build/app/outputs/flutter-apk/*.apk
+      - build/app/outputs/bundle/release/*.aab
+    publishing:
+      email:
+        recipients:
+          - you@example.com
+
+  ios-workflow:
+    name: AltavasHomes iOS
+    max_build_duration: 60
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      vars:
+        SUPABASE_URL: $SUPABASE_URL
+        SUPABASE_ANON_KEY: $SUPABASE_ANON_KEY
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.altavashomes.app
+    scripts:
+      - name: Write .env file
+        script: |
+          echo "SUPABASE_URL=$SUPABASE_URL" > .env
+          echo "SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY" >> .env
+      - name: Generate native platform folders if missing
+        script: |
+          if [ ! -d "android" ]; then
+            flutter create --platforms=android,ios,web --project-name altavashomes --org com.altavashomes .
+          fi
+      - name: Get Flutter packages
+        script: flutter pub get
+      - name: Install CocoaPods dependencies
+        script: |
+          find . -name "Podfile" -execdir pod install \;
+      - name: Flutter build ipa
+        script: |
+          flutter build ipa --release \
+            --export-options-plist=/Users/builder/export_options.plist
+    artifacts:
+      - build/ios/ipa/*.ipa
+    publishing:
+      email:
+        recipients:
+          - you@example.com
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+
+  web-workflow:
+    name: AltavasHomes Web
+    max_build_duration: 30
+    environment:
+      flutter: stable
+      vars:
+        SUPABASE_URL: $SUPABASE_URL
+        SUPABASE_ANON_KEY: $SUPABASE_ANON_KEY
+    scripts:
+      - name: Write .env file
+        script: |
+          echo "SUPABASE_URL=$SUPABASE_URL" > .env
+          echo "SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY" >> .env
+      - name: Generate native platform folders if missing
+        script: |
+          if [ ! -d "android" ]; then
+            flutter create --platforms=android,ios,web --project-name altavashomes --org com.altavashomes .
+          fi
+      - name: Get Flutter packages
+        script: flutter pub get
+      - name: Build web release
+        script: flutter build web --release
+    artifacts:
+      - build/web/**
+    publishing:
+      email:
+        recipients:
+          - you@example.com
