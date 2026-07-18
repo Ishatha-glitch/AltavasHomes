@@ -23,7 +23,6 @@ dependencies:
   # Maps + GPS
   google_maps_flutter: ^2.7.0
   geolocator: ^13.0.1
-  geocoding: ^3.0.0
 
   # Media
   image_picker: ^1.1.2
