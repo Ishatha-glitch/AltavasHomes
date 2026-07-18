@@ -71,9 +71,6 @@ workflows:
       email:
         recipients:
           - you@example.com
-      app_store_connect:
-        auth: integration
-        submit_to_testflight: true
 
   web-workflow:
     name: AltavasHomes Web
