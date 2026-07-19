@@ -17,6 +17,37 @@ workflows:
           if [ ! -d "android" ]; then
             flutter create --platforms=android,ios,web --project-name altavashomes --org com.altavashomes .
           fi
+      - name: Add location permissions and Maps API key to AndroidManifest
+        script: |
+          python3 - << 'PYEOF'
+          import os
+
+          path = "android/app/src/main/AndroidManifest.xml"
+          with open(path) as f:
+              content = f.read()
+
+          if "ACCESS_FINE_LOCATION" not in content:
+              perms = (
+                  '<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>\n'
+                  '<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>\n'
+                  '<uses-permission android:name="android.permission.INTERNET"/>\n'
+                  '    <application'
+              )
+              content = content.replace('    <application', perms, 1)
+
+          api_key = os.environ.get("GOOGLE_MAPS_API_KEY", "")
+          if "com.google.android.geo.API_KEY" not in content:
+              maps_key = (
+                  '        <meta-data android:name="com.google.android.geo.API_KEY" android:value="' + api_key + '"/>\n'
+                  '    </application>'
+              )
+              content = content.replace('    </application>', maps_key, 1)
+
+          with open(path, "w") as f:
+              f.write(content)
+
+          print("AndroidManifest patched. Maps key present:", bool(api_key))
+          PYEOF
       - name: Bump Android compileSdk/targetSdk to 36
         script: |
           GRADLE_FILE="android/app/build.gradle.kts"
