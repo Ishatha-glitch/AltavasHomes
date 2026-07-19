@@ -7,6 +7,7 @@ workflows:
       vars:
         SUPABASE_URL: "https://aqxgigbomvqjuqadlohx.supabase.co"
         SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxeGdpZ2JvbXZxanVxYWRsb2h4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxMzk5OTksImV4cCI6MjA5OTcxNTk5OX0.TRyceQXW5uVTndr3FAYBLlsiM_dVUsIu18XOdo25iSs"
+        GOOGLE_MAPS_API_KEY: "YOUR_KEY_HERE"
     scripts:
       - name: Write .env file
         script: |
