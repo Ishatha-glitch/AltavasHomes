@@ -34,6 +34,10 @@ class AltavasHomesApp extends StatelessWidget {
               useMaterial3: true,
               colorSchemeSeed: const Color(0xFF2563EB),
               scaffoldBackgroundColor: Colors.white,
+              appBarTheme: const AppBarTheme(
+                backgroundColor: Color(0xFF2563EB),
+                foregroundColor: Colors.white,
+              ),
             ),
             routerConfig: buildRouter(auth),
           );
