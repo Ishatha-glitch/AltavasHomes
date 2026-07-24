@@ -49,3 +49,4 @@ dependencies:
   http: ^1.2.2          # for API calls
   flutter_dotenv: ^5.1.0
   # ... existing ones
+  http: ^1.2.2
