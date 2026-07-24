@@ -1,0 +1,67 @@
+import { serve } from "https://deno.land/std@0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js";
+
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const CONSUMER_KEY = Deno.env.get("MPESA_CONSUMER_KEY")!;
+const CONSUMER_SECRET = Deno.env.get("MPESA_CONSUMER_SECRET")!;
+const SHORTCODE = Deno.env.get("MPESA_SHORTCODE")!;
+const PASSKEY = Deno.env.get("MPESA_PASSKEY")!; // For live
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+
+serve(async (req) => {
+  const { phone, amount, lease_id, account_ref } = await req.json();
+
+  // 1. Get OAuth Token
+  const auth = btoa(`\( {CONSUMER_KEY}: \){CONSUMER_SECRET}`);
+  const tokenRes = await fetch(
+    "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials",
+    { headers: { Authorization: `Basic ${auth}` } }
+  );
+  const { access_token } = await tokenRes.json();
+
+  // 2. STK Push
+  const timestamp = new Date().toISOString().replace(/[^0-9]/g, '').slice(0, 14);
+  const password = btoa(`\( {SHORTCODE} \){PASSKEY}${timestamp}`);
+
+  const stkRes = await fetch(
+    "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest",
+    {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${access_token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        BusinessShortCode: SHORTCODE,
+        Password: password,
+        Timestamp: timestamp,
+        TransactionType: "CustomerPayBillOnline",
+        Amount: Math.round(amount),
+        PartyA: phone,
+        PartyB: SHORTCODE,
+        PhoneNumber: phone,
+        CallBackURL: "https://YOUR-SUPABASE-PROJECT.supabase.co/functions/v1/mpesa-callback",
+        AccountReference: account_ref,
+        TransactionDesc: "AltavasHomes Rent",
+      }),
+    }
+  );
+
+  const result = await stkRes.json();
+
+  // Log pending payment
+  await supabase.from("payments").insert({
+    lease_id,
+    tenant_id: /* from auth */,
+    landlord_id: /* from lease */,
+    amount,
+    method: "mobile_money",
+    status: "pending",
+    period_month: new Date(),
+    reference: result.CheckoutRequestID,
+  });
+
+  return new Response(JSON.stringify(result), { status: 200 });
+});
