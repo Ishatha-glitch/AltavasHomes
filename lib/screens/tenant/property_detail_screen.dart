@@ -45,7 +45,7 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
       if (!mounted) return;
       setState(() => _requesting = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not send request. Check your connection.')),
+        SnackBar(content: Text('Error: $e')),
       );
     }
   }
