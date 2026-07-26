@@ -72,6 +72,14 @@ class _LandlordDashboardState extends State<LandlordDashboard> {
             icon: const Icon(Icons.add, color: Colors.white),
             label: const Text('Add', style: TextStyle(color: Colors.white)),
           ),
+          IconButton(
+  icon: const Icon(Icons.inbox_outlined, color: Colors.white),
+  tooltip: 'Rental requests',
+  onPressed: () async {
+    await context.push('/landlord/requests');
+    _load();
+  },
+),
           IconButton(icon: const Icon(Icons.logout), onPressed: auth.signOut),
         ],
       ),
