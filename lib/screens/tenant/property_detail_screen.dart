@@ -26,9 +26,16 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
         throw Exception('No profile loaded');
       }
 
+      final propertyRow = await Db.client
+          .from('properties')
+          .select('landlord_id')
+          .eq('id', widget.property['id'])
+          .single();
+
       await Db.client.from('leases').insert({
         'property_id': widget.property['id'],
         'tenant_id': profile['id'],
+        'landlord_id': propertyRow['landlord_id'],
         'monthly_rent': widget.property['rent_amount'],
         'active': false,
       });
@@ -45,7 +52,7 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
       if (!mounted) return;
       setState(() => _requesting = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        const SnackBar(content: Text('Could not send request. Check your connection.')),
       );
     }
   }
