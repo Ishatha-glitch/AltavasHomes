@@ -60,7 +60,10 @@ GoRouter buildRouter(AuthProvider auth) {
 
       // Landlord
       GoRoute(path: '/landlord', builder: (_, __) => const LandlordDashboard()),
-      GoRoute(path: '/landlord/add-property', builder: (_, __) => const AddPropertyScreen()),
+      GoRoute(
+        path: '/landlord/add-property',
+        builder: (context, state) => AddPropertyScreen(property: state.extra as Map<String, dynamic>?),
+      ),
       GoRoute(path: '/landlord/requests', builder: (_, __) => const PendingRequestsScreen()),
 
       // Service provider
