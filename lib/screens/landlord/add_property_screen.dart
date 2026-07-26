@@ -8,23 +8,44 @@ import '../../providers/auth_provider.dart';
 import '../../services/db.dart';
 
 class AddPropertyScreen extends StatefulWidget {
-  const AddPropertyScreen({super.key});
+  final Map<String, dynamic>? property;
+  const AddPropertyScreen({super.key, this.property});
 
   @override
   State<AddPropertyScreen> createState() => _AddPropertyScreenState();
 }
 
 class _AddPropertyScreenState extends State<AddPropertyScreen> {
-  final _title = TextEditingController();
-  final _description = TextEditingController();
-  final _address = TextEditingController();
-  final _bedrooms = TextEditingController(text: '1');
-  final _bathrooms = TextEditingController(text: '1');
-  final _rent = TextEditingController();
+  late final _title = TextEditingController(text: widget.property?['title'] ?? '');
+  late final _description = TextEditingController(text: widget.property?['description'] ?? '');
+  late final _address = TextEditingController(text: widget.property?['address'] ?? '');
+  late final _bedrooms = TextEditingController(text: '${widget.property?['bedrooms'] ?? 1}');
+  late final _bathrooms = TextEditingController(text: '${widget.property?['bathrooms'] ?? 1}');
+  late final _rent = TextEditingController(text: _initialRentText());
 
-  Position? _coords;
-  final List<XFile> _images = [];
+  double? _lat;
+  double? _lng;
+  List<String> _existingImageUrls = [];
+  final List<XFile> _newImages = [];
   bool _loading = false;
+
+  bool get _isEditing => widget.property != null;
+
+  String _initialRentText() {
+    if (widget.property == null) return '';
+    final value = (widget.property!['rent_amount'] as num?)?.toDouble() ?? 0;
+    return value == value.roundToDouble() ? value.toInt().toString() : value.toString();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.property != null) {
+      _lat = (widget.property!['latitude'] as num?)?.toDouble();
+      _lng = (widget.property!['longitude'] as num?)?.toDouble();
+      _existingImageUrls = List<String>.from(widget.property!['images'] ?? []);
+    }
+  }
 
   Future<void> _captureLocation() async {
     var permission = await Geolocator.checkPermission();
@@ -40,7 +61,10 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
       return;
     }
     final pos = await Geolocator.getCurrentPosition();
-    setState(() => _coords = pos);
+    setState(() {
+      _lat = pos.latitude;
+      _lng = pos.longitude;
+    });
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Location captured: ${pos.latitude.toStringAsFixed(5)}, ${pos.longitude.toStringAsFixed(5)}')),
@@ -50,12 +74,12 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
 
   Future<void> _pickImage() async {
     final picked = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 70);
-    if (picked != null) setState(() => _images.add(picked));
+    if (picked != null) setState(() => _newImages.add(picked));
   }
 
   Future<List<String>> _uploadImages(String propertyId) async {
     final urls = <String>[];
-    for (final img in _images) {
+    for (final img in _newImages) {
       final ext = img.path.split('.').last;
       final fileName = '$propertyId/${DateTime.now().millisecondsSinceEpoch}.$ext';
       final bytes = await img.readAsBytes();
@@ -66,7 +90,7 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
   }
 
   Future<void> _submit() async {
-    if (_title.text.isEmpty || _rent.text.isEmpty || _coords == null) {
+    if (_title.text.isEmpty || _rent.text.isEmpty || _lat == null || _lng == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Title, rent amount, and GPS location are required.')),
       );
@@ -76,29 +100,39 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
     final profile = context.read<AuthProvider>().profile!;
 
     try {
-      final inserted = await Db.client
-          .from('properties')
-          .insert({
-            'landlord_id': profile['id'],
-            'title': _title.text.trim(),
-            'description': _description.text.trim(),
-            'address': _address.text.trim(),
-            'latitude': _coords!.latitude,
-            'longitude': _coords!.longitude,
-            'bedrooms': int.tryParse(_bedrooms.text) ?? 1,
-            'bathrooms': int.tryParse(_bathrooms.text) ?? 1,
-            'rent_amount': double.tryParse(_rent.text) ?? 0,
-          })
-          .select()
-          .single();
+      final fields = {
+        'landlord_id': profile['id'],
+        'title': _title.text.trim(),
+        'description': _description.text.trim(),
+        'address': _address.text.trim(),
+        'latitude': _lat,
+        'longitude': _lng,
+        'bedrooms': int.tryParse(_bedrooms.text) ?? 1,
+        'bathrooms': int.tryParse(_bathrooms.text) ?? 1,
+        'rent_amount': double.tryParse(_rent.text) ?? 0,
+      };
 
-      if (_images.isNotEmpty) {
-        final urls = await _uploadImages(inserted['id']);
-        await Db.client.from('properties').update({'images': urls}).eq('id', inserted['id']);
+      late final String propertyId;
+      if (_isEditing) {
+        propertyId = widget.property!['id'] as String;
+        await Db.client.from('properties').update(fields).eq('id', propertyId);
+      } else {
+        final inserted = await Db.client.from('properties').insert(fields).select().single();
+        propertyId = inserted['id'] as String;
+      }
+
+      if (_newImages.isNotEmpty) {
+        final newUrls = await _uploadImages(propertyId);
+        await Db.client
+            .from('properties')
+            .update({'images': [..._existingImageUrls, ...newUrls]})
+            .eq('id', propertyId);
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Property listed!')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(_isEditing ? 'Property updated!' : 'Property listed!')),
+        );
         Navigator.of(context).pop();
       }
     } catch (e) {
@@ -111,7 +145,7 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('List a new property')),
+      appBar: AppBar(title: Text(_isEditing ? 'Edit property' : 'List a new property')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -136,28 +170,52 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
             OutlinedButton.icon(
               onPressed: _captureLocation,
               icon: const Icon(Icons.location_on_outlined),
-              label: Text(_coords != null ? 'Location captured — tap to recapture' : 'Capture GPS location at the house'),
+              label: Text(_lat != null ? 'Location captured — tap to recapture' : 'Capture GPS location at the house'),
             ),
             const SizedBox(height: 12),
             OutlinedButton.icon(
               onPressed: _pickImage,
               icon: const Icon(Icons.photo_camera_outlined),
-              label: Text('Add photo (${_images.length} added)'),
+              label: Text('Add photo (${_existingImageUrls.length + _newImages.length} total)'),
             ),
-            if (_images.isNotEmpty)
+            if (_existingImageUrls.isNotEmpty || _newImages.isNotEmpty)
               SizedBox(
                 height: 80,
                 child: ListView(
                   scrollDirection: Axis.horizontal,
-                  children: _images
-                      .map((img) => Padding(
-                            padding: const EdgeInsets.only(right: 8, top: 8),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: Image.file(File(img.path), width: 70, height: 70, fit: BoxFit.cover),
-                            ),
-                          ))
-                      .toList(),
+                  children: [
+                    ..._existingImageUrls.map((url) => Padding(
+                          padding: const EdgeInsets.only(right: 8, top: 8),
+                          child: Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.network(url, width: 70, height: 70, fit: BoxFit.cover),
+                              ),
+                              Positioned(
+                                top: -4,
+                                right: -4,
+                                child: GestureDetector(
+                                  onTap: () => setState(() => _existingImageUrls.remove(url)),
+                                  child: const CircleAvatar(
+                                    radius: 10,
+                                    backgroundColor: Colors.black54,
+                                    child: Icon(Icons.close, size: 14, color: Colors.white),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )),
+                    ..._newImages.map((img) => Padding(
+                          padding: const EdgeInsets.only(right: 8, top: 8),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.file(File(img.path), width: 70, height: 70, fit: BoxFit.cover),
+                          ),
+                        )),
+                  ],
                 ),
               ),
             const SizedBox(height: 20),
@@ -166,7 +224,7 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
               style: FilledButton.styleFrom(padding: const EdgeInsets.all(14)),
               child: _loading
                   ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : const Text('Publish Listing'),
+                  : Text(_isEditing ? 'Save Changes' : 'Publish Listing'),
             ),
           ],
         ),
