@@ -33,9 +33,9 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
       final data = await Db.client
           .from('leases')
           .select(
-            '*, properties!inner(id, title, address, currency, rent_amount, landlord_id), profiles!leases_tenant_id_fkey(full_name)',
+            '*, properties(id, title, address, currency, rent_amount), profiles!leases_tenant_id_fkey(full_name)',
           )
-          .eq('properties.landlord_id', profile['id'])
+          .eq('landlord_id', profile['id'])
           .eq('active', false)
           .order('created_at', ascending: false);
 
