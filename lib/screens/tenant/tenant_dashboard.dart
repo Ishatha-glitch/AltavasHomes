@@ -26,25 +26,42 @@ class _TenantDashboardState extends State<TenantDashboard> {
 
   Future<void> _load() async {
     setState(() => _loading = true);
-    final profile = context.read<AuthProvider>().profile!;
 
-    final lease = await Db.client
-        .from('leases')
-        .select('*, properties(title, address)')
-        .eq('tenant_id', profile['id'])
-        .eq('active', true)
-        .maybeSingle();
+    try {
+      final profile = context.read<AuthProvider>().profile;
+      if (profile == null) {
+        throw Exception('No profile loaded');
+      }
 
-    Map<String, dynamic>? progress;
-    if (lease != null) {
-      progress = await Db.client.from('lease_payment_progress').select().eq('lease_id', lease['id']).maybeSingle();
+      final lease = await Db.client
+          .from('leases')
+          .select('*, properties(title, address)')
+          .eq('tenant_id', profile['id'])
+          .eq('active', true)
+          .maybeSingle();
+
+      Map<String, dynamic>? progress;
+      if (lease != null) {
+        progress = await Db.client
+            .from('lease_payment_progress')
+            .select()
+            .eq('lease_id', lease['id'])
+            .maybeSingle();
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _lease = lease;
+        _progress = progress;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not load lease data: $e')),
+      );
     }
-
-    setState(() {
-      _lease = lease;
-      _progress = progress;
-      _loading = false;
-    });
   }
 
   Future<void> _payRent(String method) async {
@@ -59,10 +76,6 @@ class _TenantDashboardState extends State<TenantDashboard> {
       return;
     }
 
-    // NOTE: this inserts a "pending" payment row. In production this button
-    // triggers a Supabase Edge Function that calls the real mobile-money
-    // (e.g. M-Pesa STK push) or bank API, then a webhook flips the row to
-    // "completed". See supabase/edge-functions/payment-webhook.
     final now = DateTime.now();
     final periodMonth = DateTime(now.year, now.month, 1).toIso8601String().substring(0, 10);
 
@@ -99,10 +112,10 @@ class _TenantDashboardState extends State<TenantDashboard> {
         actions: [
           IconButton(icon: const Icon(Icons.home_work_outlined), tooltip: 'Browse homes', onPressed: () => context.push('/tenant/browse')),
           IconButton(
-                     icon: const Icon(Icons.person_outline, color: Colors.white),
-                     tooltip: 'My profile',
-                     onPressed: () => context.push('/profile'),
-      ),
+            icon: const Icon(Icons.person_outline, color: Colors.white),
+            tooltip: 'My profile',
+            onPressed: () => context.push('/profile'),
+          ),
           IconButton(icon: const Icon(Icons.logout), onPressed: auth.signOut),
         ],
       ),
