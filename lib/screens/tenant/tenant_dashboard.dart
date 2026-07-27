@@ -99,10 +99,10 @@ class _TenantDashboardState extends State<TenantDashboard> {
         actions: [
           IconButton(icon: const Icon(Icons.home_work_outlined), tooltip: 'Browse homes', onPressed: () => context.push('/tenant/browse')),
           IconButton(
-  icon: const Icon(Icons.person_outline, color: Colors.white),
-  tooltip: 'My profile',
-  onPressed: () => context.push('/profile'),
-),
+                     icon: const Icon(Icons.person_outline, color: Colors.white),
+                     tooltip: 'My profile',
+                     onPressed: () => context.push('/profile'),
+      ),
           IconButton(icon: const Icon(Icons.logout), onPressed: auth.signOut),
         ],
       ),
