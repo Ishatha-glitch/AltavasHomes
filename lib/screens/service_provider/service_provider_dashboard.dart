@@ -1,58 +1,4 @@
-import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
-
-import '../../providers/auth_provider.dart';
-import '../../services/db.dart';
-import 'package:go_router/go_router.dart';
-
-const _statusColors = {
-  'booked': Color(0xFFF59E0B),
-  'in_progress': Color(0xFF2563EB),
-  'completed': Color(0xFF16A34A),
-  'cancelled': Color(0xFFEF4444),
-};
-
-class ServiceProviderDashboard extends StatefulWidget {
-  const ServiceProviderDashboard({super.key});
-
-  @override
-  State<ServiceProviderDashboard> createState() => _ServiceProviderDashboardState();
-}
-
-class _ServiceProviderDashboardState extends State<ServiceProviderDashboard> {
-  List<Map<String, dynamic>> _bookings = [];
-  bool _loading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _load();
-  }
-
-  Future<void> _load() async {
-    setState(() => _loading = true);
-    final profile = context.read<AuthProvider>().profile!;
-    final data = await Db.client
-        .from('service_bookings')
-        .select('*, profiles!service_bookings_client_id_fkey(full_name, phone)')
-        .eq('service_provider_id', profile['id'])
-        .order('scheduled_time', ascending: true);
-    setState(() {
-      _bookings = List<Map<String, dynamic>>.from(data);
-      _loading = false;
-    });
-  }
-
-  Future<void> _advance(Map<String, dynamic> booking) async {
-    final current = booking['status'];
-    final next = current == 'booked' ? 'in_progress' : current == 'in_progress' ? 'completed' : current;
-    if (next == current) return;
-    await Db.client.from('service_bookings').update({'status': next}).eq('id', booking['id']);
-    _load();
-  }
-
-  @override
+@override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     final profile = auth.profile!;
@@ -63,24 +9,21 @@ class _ServiceProviderDashboardState extends State<ServiceProviderDashboard> {
         .fold<double>(0, (sum, b) => sum + ((b['expected_amount'] as num?)?.toDouble() ?? 0));
 
     return Scaffold(
-  appBar: AppBar(
-    title: Text('Hi $firstName 👋'),
-    actions: [
-      IconButton(
-        icon: const Icon(Icons.person_outline, color: Colors.white),
-        tooltip: 'My profile',
-        onPressed: () => context.push('/profile'),
+      appBar: AppBar(
+        title: Text('Hi $firstName 👋'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.person_outline, color: Colors.white),
+            tooltip: 'My profile',
+            onPressed: () => context.push('/profile'),
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: auth.signOut,
+          ),
+        ],
       ),
-      IconButton(
-        icon: const Icon(Icons.logout),
-        onPressed: auth.signOut,
-      ),
-    ],
-  ),   // ← this closing parenthesis was missing
-  body: _loading
-      ? const Center(child: CircularProgressIndicator())
-      : RefreshIndicator(
-          // ... rest of the code
+      body: _loading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
               onRefresh: _load,
@@ -150,4 +93,3 @@ class _ServiceProviderDashboardState extends State<ServiceProviderDashboard> {
             ),
     );
   }
-}
