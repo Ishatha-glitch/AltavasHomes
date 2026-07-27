@@ -18,6 +18,8 @@ import 'screens/landlord/pending_requests.dart';
 
 import 'screens/service_provider/service_provider_dashboard.dart';
 
+import 'screens/profile_screen.dart';
+GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),
 GoRouter buildRouter(AuthProvider auth) {
   return GoRouter(
     refreshListenable: auth,
