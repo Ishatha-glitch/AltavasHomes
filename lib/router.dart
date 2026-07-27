@@ -18,14 +18,9 @@ import 'screens/landlord/pending_requests.dart';
 
 import 'screens/service_provider/service_provider_dashboard.dart';
 
-routes: [
-  GoRoute(path: '/signin', builder: (_, __) => const SignInScreen()),
-  GoRoute(path: '/role-select', builder: (_, __) => const RoleSelectScreen()),
-  // ... other routes ...
+import 'screens/profile_screen.dart';
 
-  // Add this:
-  GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),
-],
+GoRouter buildRouter(AuthProvider auth) {
   return GoRouter(
     refreshListenable: auth,
     initialLocation: '/signin',
@@ -75,6 +70,9 @@ routes: [
 
       // Service provider
       GoRoute(path: '/provider', builder: (_, __) => const ServiceProviderDashboard()),
+
+      // Profile
+      GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),
     ],
   );
 }
