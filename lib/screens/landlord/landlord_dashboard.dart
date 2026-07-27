@@ -133,6 +133,11 @@ class _LandlordDashboardState extends State<LandlordDashboard> {
               _load();
             },
           ),
+          IconButton(
+  icon: const Icon(Icons.person_outline, color: Colors.white),
+  tooltip: 'My profile',
+  onPressed: () => context.push('/profile'),
+),
           IconButton(icon: const Icon(Icons.logout), onPressed: auth.signOut),
         ],
       ),
