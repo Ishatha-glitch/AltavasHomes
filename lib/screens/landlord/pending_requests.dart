@@ -37,6 +37,7 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
           )
           .eq('landlord_id', profile['id'])
           .eq('active', false)
+          .isFilter('ended_at', null)
           .order('created_at', ascending: false);
 
       if (!mounted) return;
@@ -48,7 +49,7 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
       if (!mounted) return;
       setState(() => _loading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not load requests: $e')),
+        const SnackBar(content: Text('Could not load requests. Check your connection.')),
       );
     }
   }
