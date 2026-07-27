@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../providers/auth_provider.dart';
 import '../../services/db.dart';
+import 'package:go_router/go_router.dart';
 
 const _statusColors = {
   'booked': Color(0xFFF59E0B),
