@@ -63,20 +63,24 @@ class _ServiceProviderDashboardState extends State<ServiceProviderDashboard> {
         .fold<double>(0, (sum, b) => sum + ((b['expected_amount'] as num?)?.toDouble() ?? 0));
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Hi $firstName 👋'),
-        actions: [
-  IconButton(
-    icon: const Icon(Icons.person_outline, color: Colors.white),
-    tooltip: 'My profile',
-    onPressed: () => context.push('/profile'),
-  ),
-  IconButton(
-    icon: const Icon(Icons.logout),
-    onPressed: auth.signOut,
-  ),
-],
-      body: _loading
+  appBar: AppBar(
+    title: Text('Hi $firstName 👋'),
+    actions: [
+      IconButton(
+        icon: const Icon(Icons.person_outline, color: Colors.white),
+        tooltip: 'My profile',
+        onPressed: () => context.push('/profile'),
+      ),
+      IconButton(
+        icon: const Icon(Icons.logout),
+        onPressed: auth.signOut,
+      ),
+    ],
+  ),   // ← this closing parenthesis was missing
+  body: _loading
+      ? const Center(child: CircularProgressIndicator())
+      : RefreshIndicator(
+          // ... rest of the code
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
               onRefresh: _load,
