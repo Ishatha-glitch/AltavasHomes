@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -52,25 +51,21 @@ class _LandlordDashboardState extends State<LandlordDashboard> {
       }
 
       if (activeLeaseIds.isNotEmpty) {
-        try {
-          final progressRows = await Db.client
-              .from('lease_payment_progress')
-              .select()
-              .inFilter('lease_id', activeLeaseIds);
+        final progressRows = await Db.client
+            .from('lease_payment_progress')
+            .select()
+            .inFilter('lease_id', activeLeaseIds);
 
-          final progressByLeaseId = <String, Map<String, dynamic>>{
-            for (final row in List<Map<String, dynamic>>.from(progressRows))
-              row['lease_id'] as String: row,
-          };
+        final progressByLeaseId = <String, Map<String, dynamic>>{
+          for (final row in List<Map<String, dynamic>>.from(progressRows))
+            row['lease_id'] as String: row,
+        };
 
-          for (final p in properties) {
-            final activeLease = p['activeLease'];
-            if (activeLease != null) {
-              p['progress'] = progressByLeaseId[activeLease['id']];
-            }
+        for (final p in properties) {
+          final activeLease = p['activeLease'];
+          if (activeLease != null) {
+            p['progress'] = progressByLeaseId[activeLease['id']];
           }
-        } catch (_) {
-          // Progress is optional — don't fail the whole screen
         }
       }
 
@@ -83,7 +78,69 @@ class _LandlordDashboardState extends State<LandlordDashboard> {
       if (!mounted) return;
       setState(() => _loading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not load properties: $e')),
+        const SnackBar(content: Text('Could not load properties. Check your connection.')),
+      );
+    }
+  }
+
+  Future<void> _removeTenant(Map<String, dynamic> property, Map<String, dynamic> lease) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Remove tenant?'),
+        content: Text('This marks "${property['title'] ?? 'this property'}" vacant again and ends the current lease. Past payment history is kept.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Remove', style: TextStyle(color: Color(0xFFEF4444))),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      await Db.client.from('leases').update({
+        'active': false,
+        'ended_at': DateTime.now().toIso8601String(),
+      }).eq('id', lease['id']);
+      await Db.client.from('properties').update({'status': 'vacant'}).eq('id', property['id']);
+      _load();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not remove tenant: $e')),
+      );
+    }
+  }
+
+  Future<void> _deleteProperty(Map<String, dynamic> property) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete property?'),
+        content: Text('This permanently removes "${property['title'] ?? 'this property'}". This can\'t be undone.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete', style: TextStyle(color: Color(0xFFEF4444))),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      await Db.client.from('properties').delete().eq('id', property['id']);
+      _load();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not delete: $e')),
       );
     }
   }
@@ -172,6 +229,24 @@ class _LandlordDashboardState extends State<LandlordDashboard> {
                                     children: [
                                       Text(isVacant ? 'Vacant' : 'Occupied', style: TextStyle(color: isVacant ? const Color(0xFF16A34A) : const Color(0xFFEF4444), fontWeight: FontWeight.w600)),
                                       Switch(value: !isVacant, onChanged: (_) => _toggleVacancy(p)),
+                                      PopupMenuButton<String>(
+                                        onSelected: (value) async {
+                                          if (value == 'edit') {
+                                            await context.push('/landlord/add-property', extra: p);
+                                            _load();
+                                          } else if (value == 'remove_tenant') {
+                                            _removeTenant(p, activeLease);
+                                          } else if (value == 'delete') {
+                                            _deleteProperty(p);
+                                          }
+                                        },
+                                        itemBuilder: (context) => [
+                                          const PopupMenuItem(value: 'edit', child: Text('Edit')),
+                                          if (activeLease != null)
+                                            const PopupMenuItem(value: 'remove_tenant', child: Text('Remove tenant')),
+                                          const PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: Color(0xFFEF4444)))),
+                                        ],
+                                      ),
                                     ],
                                   ),
                                 ],
