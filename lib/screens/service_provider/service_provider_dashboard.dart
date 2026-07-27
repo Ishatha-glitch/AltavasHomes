@@ -64,11 +64,11 @@ class _ServiceProviderDashboardState extends State<ServiceProviderDashboard> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Hi $firstName 👋'),
-        actions: IconButton(
+        actions: [IconButton(
   icon: const Icon(Icons.person_outline, color: Colors.white),
   tooltip: 'My profile',
   onPressed: () => context.push('/profile'),
-),
+),]
         [IconButton(icon: const Icon(Icons.logout), onPressed: auth.signOut)],
       ),
       body: _loading
