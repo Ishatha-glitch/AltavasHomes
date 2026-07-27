@@ -38,6 +38,8 @@ class _TenantDashboardState extends State<TenantDashboard> {
           .select('*, properties(title, address)')
           .eq('tenant_id', profile['id'])
           .eq('active', true)
+          .order('created_at', ascending: false)
+          .limit(1)
           .maybeSingle();
 
       Map<String, dynamic>? progress;
