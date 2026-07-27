@@ -33,7 +33,7 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
       final data = await Db.client
           .from('leases')
           .select(
-            '*, properties(id, title, address, currency, rent_amount), profiles!leases_tenant_id_fkey(full_name)',
+            '*, properties(id, title, address, currency, rent_amount), profiles(full_name)',
           )
           .eq('landlord_id', profile['id'])
           .eq('active', false)
@@ -48,7 +48,7 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
       if (!mounted) return;
       setState(() => _loading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not load requests. Check your connection.')),
+        SnackBar(content: Text('Could not load requests: $e')),
       );
     }
   }
