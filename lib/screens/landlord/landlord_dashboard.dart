@@ -78,7 +78,7 @@ class _LandlordDashboardState extends State<LandlordDashboard> {
       if (!mounted) return;
       setState(() => _loading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not load properties. Check your connection.')),
+        SnackBar(content: Text('Error: $e')),
       );
     }
   }
