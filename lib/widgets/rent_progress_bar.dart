@@ -1,33 +1,112 @@
 import 'package:flutter/material.dart';
 
 class RentProgressBar extends StatelessWidget {
+  /// Percentage paid (0–100)
   final double percent;
-  const RentProgressBar({super.key, required this.percent});
+
+  /// Amount already paid
+  final double? amountPaid;
+
+  /// Total monthly rent
+  final double? totalRent;
+
+  /// Show percentage label
+  final bool showPercentage;
+
+  const RentProgressBar({
+    super.key,
+    required this.percent,
+    this.amountPaid,
+    this.totalRent,
+    this.showPercentage = true,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final clamped = percent.clamp(0, 100).toDouble();
-    final color = clamped >= 100
-        ? const Color(0xFF16A34A)
-        : clamped >= 50
-            ? const Color(0xFFF59E0B)
-            : const Color(0xFFEF4444);
+    final value = percent.clamp(0.0, 100.0);
+
+    Color progressColor;
+
+    if (value >= 100) {
+      progressColor = Colors.green;
+    } else if (value >= 75) {
+      progressColor = Colors.lightGreen;
+    } else if (value >= 50) {
+      progressColor = Colors.orange;
+    } else if (value >= 25) {
+      progressColor = Colors.deepOrange;
+    } else {
+      progressColor = Colors.red;
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (showPercentage)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                "Rent Progress",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                "${value.toStringAsFixed(0)}%",
+                style: TextStyle(
+                  color: progressColor,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+
+        if (showPercentage) const SizedBox(height: 8),
+
         ClipRRect(
-          borderRadius: BorderRadius.circular(7),
+          borderRadius: BorderRadius.circular(10),
           child: LinearProgressIndicator(
-            value: clamped / 100,
+            value: value / 100,
             minHeight: 14,
-            backgroundColor: const Color(0xFFEEEEEE),
-            valueColor: AlwaysStoppedAnimation<Color>(color),
+            backgroundColor: Colors.grey.shade300,
+            valueColor: AlwaysStoppedAnimation(progressColor),
           ),
         ),
-        const SizedBox(height: 6),
-        Text('${clamped.toStringAsFixed(0)}% of this month\'s rent paid',
-            style: const TextStyle(fontSize: 13, color: Color(0xFF555555))),
+
+        if (amountPaid != null && totalRent != null) ...[
+          const SizedBox(height: 10),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Paid: ${amountPaid!.toStringAsFixed(2)}",
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              Text(
+                "Rent: ${totalRent!.toStringAsFixed(2)}",
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 6),
+
+          Text(
+            value >= 100
+                ? "✅ Rent fully paid for this month."
+                : "Remaining: ${(totalRent! - amountPaid!).clamp(0, totalRent!).toStringAsFixed(2)}",
+            style: TextStyle(
+              color: progressColor,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
       ],
     );
   }
