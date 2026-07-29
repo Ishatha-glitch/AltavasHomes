@@ -352,3 +352,134 @@ class _AddPropertyScreenState
           ),
         ),
       ),
+      Step(
+        title: const Text("Blocks"),
+        isActive: _currentStep >= 3,
+        content: SizedBox(
+          height: 520,
+          child: BlockConfigurationStep(
+            blocks: _blocks,
+            onChanged: (blocks) {
+              setState(() {
+                _blocks = blocks;
+              });
+
+              _generateUnits();
+            },
+          ),
+        ),
+      ),
+
+      Step(
+        title: const Text("Units"),
+        isActive: _currentStep >= 4,
+        content: SizedBox(
+          height: 520,
+          child: UnitPreviewStep(
+            units: _generatedUnits,
+            onChanged: (units) {
+              setState(() {
+                _generatedUnits = units;
+              });
+            },
+          ),
+        ),
+      ),
+
+      Step(
+        title: const Text("Images"),
+        isActive: _currentStep >= 5,
+        content: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            FilledButton.icon(
+              onPressed: _pickImages,
+              icon: const Icon(Icons.photo_library),
+              label: const Text(
+                "Select Property Images",
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            if (_images.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: Colors.grey.shade300,
+                  ),
+                  borderRadius:
+                      BorderRadius.circular(12),
+                ),
+                child: const Center(
+                  child: Text(
+                    "No images selected.",
+                  ),
+                ),
+              )
+            else
+              SizedBox(
+                height: 120,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _images.length,
+                  itemBuilder: (context, index) {
+                    return Padding(
+                      padding:
+                          const EdgeInsets.only(
+                        right: 12,
+                      ),
+                      child: ClipRRect(
+                        borderRadius:
+                            BorderRadius.circular(
+                                12),
+                        child: Image.memory(
+                          _images[index],
+                          width: 120,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+          ],
+        ),
+      ),
+    ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          "Create Property",
+        ),
+      ),
+      body: Form(
+        key: _formKey,
+        child: Stepper(
+          currentStep: _currentStep,
+          type: StepperType.vertical,
+          physics:
+              const ClampingScrollPhysics(),
+          steps: _steps(),
+
+          onStepContinue: () {
+            if (_currentStep == 5) {
+              _publishProperty();
+            } else {
+              _nextStep();
+            }
+          },
+
+          onStepCancel: _previousStep,
+
+          onStepTapped: (step) {
+            setState(() {
+              _currentStep = step;
+            });
+          },
