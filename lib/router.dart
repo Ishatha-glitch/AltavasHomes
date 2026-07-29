@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 
 import 'providers/auth_provider.dart';
 
 import 'screens/auth/sign_in_screen.dart';
-import 'screens/auth/role_select_screen.dart';
 import 'screens/auth/sign_up_screen.dart';
+import 'screens/auth/role_select_screen.dart';
 
 import 'screens/tenant/tenant_dashboard.dart';
 import 'screens/tenant/property_list_screen.dart';
@@ -22,57 +21,241 @@ import 'screens/profile_screen.dart';
 
 GoRouter buildRouter(AuthProvider auth) {
   return GoRouter(
+    debugLogDiagnostics: true,
     refreshListenable: auth,
     initialLocation: '/signin',
-    redirect: (context, state) {
-      final loggedIn = auth.session != null && auth.profile != null;
-      final loggingIn = ['/signin', '/role-select', '/signup'].contains(state.matchedLocation);
 
-      if (auth.loading) return null; // wait for splash
-      if (!loggedIn && !loggingIn) return '/signin';
-      if (loggedIn && loggingIn) {
+    redirect: (context, state) {
+      if (auth.loading) {
+        return null;
+      }
+
+      final bool loggedIn =
+          auth.session != null && auth.profile != null;
+
+      final bool isAuthRoute = [
+        '/signin',
+        '/signup',
+        '/role-select',
+      ].contains(state.matchedLocation);
+
+      if (!loggedIn) {
+        return isAuthRoute ? null : '/signin';
+      }
+
+      if (loggedIn && isAuthRoute) {
         switch (auth.role) {
           case 'tenant':
             return '/tenant';
+
           case 'landlord':
             return '/landlord';
+
           case 'service_provider':
             return '/provider';
+
+          case 'admin':
+            return '/admin';
+
           default:
             return '/signin';
         }
       }
+
+      // Protect tenant routes
+      if (state.matchedLocation.startsWith('/tenant') &&
+          auth.role != 'tenant') {
+        return _homeForRole(auth.role);
+      }
+
+      // Protect landlord routes
+      if (state.matchedLocation.startsWith('/landlord') &&
+          auth.role != 'landlord') {
+        return _homeForRole(auth.role);
+      }
+
+      // Protect provider routes
+      if (state.matchedLocation.startsWith('/provider') &&
+          auth.role != 'service_provider') {
+        return _homeForRole(auth.role);
+      }
+
       return null;
     },
+
     routes: [
-      GoRoute(path: '/signin', builder: (_, __) => const SignInScreen()),
-      GoRoute(path: '/role-select', builder: (_, __) => const RoleSelectScreen()),
+
+      //--------------------------
+      // AUTH
+      //--------------------------
+
+      GoRoute(
+        path: '/signin',
+        builder: (_, __) => const SignInScreen(),
+      ),
+
       GoRoute(
         path: '/signup',
-        builder: (context, state) => SignUpScreen(role: state.extra as String? ?? 'tenant'),
+        builder: (context, state) {
+          final role =
+              (state.extra is String) ? state.extra as String : 'tenant';
+
+          return SignUpScreen(role: role);
+        },
       ),
 
-      // Tenant
-      GoRoute(path: '/tenant', builder: (_, __) => const TenantDashboard()),
-      GoRoute(path: '/tenant/browse', builder: (_, __) => const PropertyListScreen()),
+      GoRoute(
+        path: '/role-select',
+        builder: (_, __) => const RoleSelectScreen(),
+      ),
+
+      //--------------------------
+      // TENANT
+      //--------------------------
+
+      GoRoute(
+        path: '/tenant',
+        builder: (_, __) => const TenantDashboard(),
+      ),
+
+      GoRoute(
+        path: '/tenant/browse',
+        builder: (_, __) => const PropertyListScreen(),
+      ),
+
       GoRoute(
         path: '/tenant/property',
-        builder: (context, state) => PropertyDetailScreen(property: state.extra as Map<String, dynamic>),
+        builder: (context, state) {
+
+          if (state.extra == null ||
+              state.extra is! Map<String, dynamic>) {
+            return const NotFoundScreen();
+          }
+
+          return PropertyDetailScreen(
+            property: state.extra as Map<String, dynamic>,
+          );
+        },
       ),
 
-      // Landlord
-      GoRoute(path: '/landlord', builder: (_, __) => const LandlordDashboard()),
+      //--------------------------
+      // LANDLORD
+      //--------------------------
+
+      GoRoute(
+        path: '/landlord',
+        builder: (_, __) => const LandlordDashboard(),
+      ),
+
       GoRoute(
         path: '/landlord/add-property',
-        builder: (context, state) => AddPropertyScreen(property: state.extra as Map<String, dynamic>?),
+        builder: (context, state) {
+
+          Map<String, dynamic>? property;
+
+          if (state.extra != null &&
+              state.extra is Map<String, dynamic>) {
+            property = state.extra as Map<String, dynamic>;
+          }
+
+          return AddPropertyScreen(
+            property: property,
+          );
+        },
       ),
-      GoRoute(path: '/landlord/requests', builder: (_, __) => const PendingRequestsScreen()),
 
-      // Service provider
-      GoRoute(path: '/provider', builder: (_, __) => const ServiceProviderDashboard()),
+      GoRoute(
+        path: '/landlord/requests',
+        builder: (_, __) => const PendingRequestsScreen(),
+      ),
 
-      // Profile
-      GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),
+      //--------------------------
+      // SERVICE PROVIDER
+      //--------------------------
+
+      GoRoute(
+        path: '/provider',
+        builder: (_, __) => const ServiceProviderDashboard(),
+      ),
+
+      //--------------------------
+      // PROFILE
+      //--------------------------
+
+      GoRoute(
+        path: '/profile',
+        builder: (_, __) => const ProfileScreen(),
+      ),
     ],
+
+    errorBuilder: (context, state) =>
+        const NotFoundScreen(),
   );
+}
+
+String _homeForRole(String? role) {
+  switch (role) {
+    case 'tenant':
+      return '/tenant';
+
+    case 'landlord':
+      return '/landlord';
+
+    case 'service_provider':
+      return '/provider';
+
+    case 'admin':
+      return '/admin';
+
+    default:
+      return '/signin';
+  }
+}
+
+class NotFoundScreen extends StatelessWidget {
+  const NotFoundScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Page Not Found'),
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.error_outline,
+                size: 90,
+                color: Colors.red,
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                '404',
+                style: TextStyle(
+                  fontSize: 42,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'The page you requested does not exist.',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 25),
+              ElevatedButton(
+                onPressed: () {
+                  context.go('/signin');
+                },
+                child: const Text('Go Home'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
