@@ -4,44 +4,224 @@ import 'package:go_router/go_router.dart';
 class RoleSelectScreen extends StatelessWidget {
   const RoleSelectScreen({super.key});
 
-  static const roles = [
-    {'key': 'tenant', 'label': 'Tenant', 'blurb': 'Find a house and pay rent'},
-    {'key': 'landlord', 'label': 'Landlord', 'blurb': 'List properties, track rent'},
-    {'key': 'service_provider', 'label': 'Service Provider', 'blurb': 'Plumber, electrician, mover…'},
-  ];
+  static const Color _primaryColor = Color(0xFF2563EB);
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+
+    final isWideScreen = width > 700;
+
     return Scaffold(
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                'Join AltavasHomes as…',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: 850,
               ),
+              child: Column(
+                children: [
+                  const Icon(
+                    Icons.home_work_rounded,
+                    size: 80,
+                    color: _primaryColor,
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  const Text(
+                    "Choose Your Role",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 30,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  const Text(
+                    "Select how you'll use AltavasHomes.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 16,
+                    ),
+                  ),
+
+                  const SizedBox(height: 40),
+
+                  isWideScreen
+                      ? Row(
+                          children: const [
+                            Expanded(
+                              child: _RoleCard(
+                                title: "Tenant",
+                                subtitle:
+                                    "Find houses, pay rent, download receipts and request maintenance.",
+                                icon: Icons.apartment,
+                                color: Colors.blue,
+                                role: "tenant",
+                              ),
+                            ),
+                            SizedBox(width: 20),
+                            Expanded(
+                              child: _RoleCard(
+                                title: "Landlord",
+                                subtitle:
+                                    "Manage properties, tenants and monitor rent payments.",
+                                icon: Icons.business,
+                                color: Colors.green,
+                                role: "landlord",
+                              ),
+                            ),
+                            SizedBox(width: 20),
+                            Expanded(
+                              child: _RoleCard(
+                                title: "Service Provider",
+                                subtitle:
+                                    "Receive maintenance jobs and grow your business.",
+                                icon: Icons.handyman,
+                                color: Colors.orange,
+                                role: "service_provider",
+                              ),
+                            ),
+                          ],
+                        )
+                      : Column(
+                          children: const [
+                            _RoleCard(
+                              title: "Tenant",
+                              subtitle:
+                                  "Find houses, pay rent, download receipts and request maintenance.",
+                              icon: Icons.apartment,
+                              color: Colors.blue,
+                              role: "tenant",
+                            ),
+                            SizedBox(height: 18),
+                            _RoleCard(
+                              title: "Landlord",
+                              subtitle:
+                                  "Manage properties, tenants and monitor rent payments.",
+                              icon: Icons.business,
+                              color: Colors.green,
+                              role: "landlord",
+                            ),
+                            SizedBox(height: 18),
+                            _RoleCard(
+                              title: "Service Provider",
+                              subtitle:
+                                  "Receive maintenance jobs and grow your business.",
+                              icon: Icons.handyman,
+                              color: Colors.orange,
+                              role: "service_provider",
+                            ),
+                          ],
+                        ),
+
+                  const SizedBox(height: 35),
+
+                  TextButton(
+                    onPressed: () {
+                      context.go('/signin');
+                    },
+                    child: const Text(
+                      "Already have an account? Sign In",
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RoleCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Color color;
+  final String role;
+
+  const _RoleCard({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.color,
+    required this.role,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 4,
+      shadowColor: color.withOpacity(.25),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: () {
+          context.push(
+            '/signup',
+            extra: role,
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(22),
+          child: Column(
+            children: [
+              CircleAvatar(
+                radius: 34,
+                backgroundColor: color.withOpacity(.12),
+                child: Icon(
+                  icon,
+                  color: color,
+                  size: 34,
+                ),
+              ),
+
+              const SizedBox(height: 18),
+
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              Text(
+                subtitle,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.grey,
+                  height: 1.4,
+                ),
+              ),
+
               const SizedBox(height: 24),
-              ...roles.map((r) => Card(
-                    margin: const EdgeInsets.only(bottom: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      side: const BorderSide(color: Color(0xFFE0E0E0)),
-                    ),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.all(14),
-                      title: Text(r['label']!, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-                      subtitle: Text(r['blurb']!),
-                      onTap: () => context.push('/signup', extra: r['key']),
-                    ),
-                  )),
-              TextButton(
-                onPressed: () => context.go('/signin'),
-                child: const Text('Already have an account? Sign in'),
+
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: () {
+                    context.push(
+                      '/signup',
+                      extra: role,
+                    );
+                  },
+                  icon: const Icon(Icons.arrow_forward),
+                  label: const Text("Continue"),
+                ),
               ),
             ],
           ),
