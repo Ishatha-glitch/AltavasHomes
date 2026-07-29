@@ -1,52 +1,12 @@
-
 name: altavashomes
 description: AltavasHomes — rentals, rent tracking, and service bookings for tenants, landlords, and service providers.
-publish_to: 'none'
+publish_to: "none"
+
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.3.0 <4.0.0'
+  sdk: ">=3.3.0 <4.0.0"
 
-dependencies:
-  flutter:
-    sdk: flutter
-  cupertino_icons: ^1.0.6
-
-  # Backend
-  supabase_flutter: ^2.5.6
-
-  # State management
-  provider: ^6.1.2
-
-  # Routing (role-based redirects)
-  go_router: ^14.2.0
-
-  # Maps + GPS
-  google_maps_flutter: ^2.7.0
-  geolocator: ^13.0.1
-
-  # Media
-  image_picker: ^1.1.2
-
-  # Formatting
-  intl: ^0.19.0
-
-  # Env config
-  flutter_dotenv: ^5.1.0
-
-  # API calls
-  http: ^1.2.2
-
-dev_dependencies:
-  flutter_test:
-    sdk: flutter
-  flutter_lints: ^4.0.0
-
-flutter:
-  uses-material-design: true
-  assets:
-    - .env
-    - assets/images/
 dependencies:
   flutter:
     sdk: flutter
@@ -65,17 +25,18 @@ dependencies:
   # Local Storage
   shared_preferences: ^2.3.2
 
-  # Environment
+  # Environment Variables
   flutter_dotenv: ^5.1.0
 
-  # Maps
+  # Maps & GPS
   google_maps_flutter: ^2.7.0
   geolocator: ^13.0.1
 
-  # Images
+  # Media
   image_picker: ^1.1.2
+  file_picker: ^8.1.2
 
-  # HTTP
+  # Networking
   http: ^1.2.2
 
   # Formatting
@@ -84,24 +45,34 @@ dependencies:
   # Animations
   flutter_animate: ^4.5.0
 
-  # SVG logos/icons
+  # SVG Support
   flutter_svg: ^2.0.10
 
   # Charts
   fl_chart: ^0.69.0
 
-  # File picker
-  file_picker: ^8.1.2
-
-  # PDF generation
+  # PDF Generation
   pdf: ^3.11.1
   printing: ^5.13.2
 
   # Notifications
   flutter_local_notifications: ^18.0.1
 
-  # URL launcher
+  # URL Launcher
   url_launcher: ^6.3.0
 
   # Connectivity
   connectivity_plus: ^6.0.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - .env
+    - assets/images/
