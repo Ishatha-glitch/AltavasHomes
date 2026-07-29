@@ -483,3 +483,57 @@ class _AddPropertyScreenState
               _currentStep = step;
             });
           },
+          controlsBuilder: (
+            BuildContext context,
+            ControlsDetails details,
+          ) {
+            return Padding(
+              padding: const EdgeInsets.only(
+                top: 24,
+              ),
+              child: Row(
+                children: [
+                  if (_currentStep > 0)
+                    OutlinedButton(
+                      onPressed: _saving
+                          ? null
+                          : details.onStepCancel,
+                      child: const Text(
+                        "Previous",
+                      ),
+                    ),
+
+                  if (_currentStep > 0)
+                    const SizedBox(width: 12),
+
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: _saving
+                          ? null
+                          : details.onStepContinue,
+                      child: _saving
+                          ? const SizedBox(
+                              height: 22,
+                              width: 22,
+                              child:
+                                  CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : Text(
+                              _currentStep == 5
+                                  ? "Publish Property"
+                                  : "Next",
+                            ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
