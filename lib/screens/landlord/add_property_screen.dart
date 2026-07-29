@@ -69,7 +69,13 @@ class _AddPropertyScreenState
   List<String> _selectedAmenities = [];
 
   /// Step 4
-  List<BlockConfiguration> _blocks = [];
+  List<BlockConfiguration> _blocks = [
+  BlockConfiguration(
+    name: 'A',
+    floors: 1,
+    unitsPerFloor: 1,
+  ),
+];
 
   /// Step 5
   List<Map<String, dynamic>> _generatedUnits = [];
