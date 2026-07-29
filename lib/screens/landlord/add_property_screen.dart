@@ -44,7 +44,7 @@ class _AddPropertyScreenState
   final _descriptionController =
       TextEditingController();
 
-  String _propertyType = '';
+  String _propertyType = 'apartment';
 
   /// Step 2
   final _countryController =
