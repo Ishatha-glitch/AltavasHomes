@@ -193,3 +193,162 @@ class _AddPropertyScreenState
           .profile!;
 
       // Publishing continues in Part 2...
+      final propertyId =
+          await PropertyService.createProperty(
+        landlordId: landlord['id'],
+        propertyName:
+            _propertyNameController.text.trim(),
+        propertyType: _propertyType,
+        description:
+            _descriptionController.text.trim(),
+        country: _countryController.text.trim(),
+        county: _countyController.text.trim(),
+        town: _townController.text.trim(),
+        estate: _estateController.text.trim(),
+        street: _streetController.text.trim(),
+        latitude: _latitude!,
+        longitude: _longitude!,
+      );
+
+      if (_selectedAmenities.isNotEmpty) {
+        await PropertyService.saveAmenities(
+          propertyId: propertyId,
+          amenities: _selectedAmenities,
+        );
+      }
+
+      if (_blocks.isNotEmpty) {
+        final blockRows = _blocks
+            .map(
+              (block) => {
+                "name": block.blockName,
+                "floors": block.floors,
+              },
+            )
+            .toList();
+
+        await PropertyService.saveBlocks(
+          propertyId: propertyId,
+          blocks: blockRows,
+        );
+      }
+
+      if (_generatedUnits.isNotEmpty) {
+        await PropertyService.saveUnits(
+          propertyId: propertyId,
+          units: _generatedUnits,
+        );
+      }
+
+      if (_images.isNotEmpty) {
+        final urls =
+            await PropertyService.uploadImages(
+          propertyId: propertyId,
+          images: _images,
+        );
+
+        await PropertyService.saveImages(
+          propertyId: propertyId,
+          imageUrls: urls,
+        );
+      }
+
+      await PropertyService.publishProperty(
+        propertyId,
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Property published successfully.",
+          ),
+        ),
+      );
+
+      Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            "Failed to publish property.\n$e",
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _saving = false;
+        });
+      }
+    }
+  }
+
+  List<Step> _steps() {
+    return [
+      Step(
+        title: const Text("Information"),
+        isActive: _currentStep >= 0,
+        content: SizedBox(
+          height: 520,
+          child: PropertyInfoStep(
+            propertyNameController:
+                _propertyNameController,
+            descriptionController:
+                _descriptionController,
+            propertyType: _propertyType,
+            onPropertyTypeChanged: (value) {
+              setState(() {
+                _propertyType = value ?? '';
+              });
+            },
+          ),
+        ),
+      ),
+
+      Step(
+        title: const Text("Location"),
+        isActive: _currentStep >= 1,
+        content: SizedBox(
+          height: 560,
+          child: LocationStep(
+            countryController:
+                _countryController,
+            countyController:
+                _countyController,
+            townController:
+                _townController,
+            estateController:
+                _estateController,
+            streetController:
+                _streetController,
+            latitude: _latitude,
+            longitude: _longitude,
+            onLocationCaptured:
+                (lat, lng) {
+              setState(() {
+                _latitude = lat;
+                _longitude = lng;
+              });
+            },
+          ),
+        ),
+      ),
+
+      Step(
+        title: const Text("Amenities"),
+        isActive: _currentStep >= 2,
+        content: SizedBox(
+          height: 520,
+          child: AmenitiesStep(
+            selectedAmenities:
+                _selectedAmenities,
+            onChanged: (items) {
+              _selectedAmenities = items;
+            },
+          ),
+        ),
+      ),
