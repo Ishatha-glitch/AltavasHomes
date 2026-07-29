@@ -3,45 +3,35 @@ import 'package:flutter/material.dart';
 class BlockConfiguration {
   final TextEditingController nameController;
   final TextEditingController floorsController;
-  final TextEditingController unitsController;
+  final TextEditingController unitsPerFloorController;
 
   BlockConfiguration({
     String name = '',
     int floors = 1,
-    int units = 1,
+    int unitsPerFloor = 1,
   })  : nameController = TextEditingController(text: name),
-        floorsController =
-            TextEditingController(text: floors.toString()),
-        unitsController =
-            TextEditingController(text: units.toString());
+        floorsController = TextEditingController(text: floors.toString()),
+        unitsPerFloorController =
+            TextEditingController(text: unitsPerFloor.toString());
+
+  String get blockName => nameController.text.trim();
 
   int get floors =>
-      int.tryParse(floorsController.text) ?? 1;
+      int.tryParse(floorsController.text.trim()) ?? 1;
 
   int get unitsPerFloor =>
-      int.tryParse(unitsController.text) ?? 1;
-
-  int get totalUnits => floors * unitsPerFloor;
-
-  String get blockName {
-    if (nameController.text.trim().isEmpty) {
-      return "Unnamed Block";
-    }
-    return nameController.text.trim();
-  }
+      int.tryParse(unitsPerFloorController.text.trim()) ?? 1;
 
   void dispose() {
     nameController.dispose();
     floorsController.dispose();
-    unitsController.dispose();
+    unitsPerFloorController.dispose();
   }
 }
 
 class BlockConfigurationStep extends StatefulWidget {
   final List<BlockConfiguration> blocks;
-
-  final ValueChanged<List<BlockConfiguration>>
-      onChanged;
+  final ValueChanged<List<BlockConfiguration>> onChanged;
 
   const BlockConfigurationStep({
     super.key,
@@ -56,66 +46,60 @@ class BlockConfigurationStep extends StatefulWidget {
 
 class _BlockConfigurationStepState
     extends State<BlockConfigurationStep> {
+
   late List<BlockConfiguration> blocks;
 
   @override
   void initState() {
     super.initState();
 
-    if (widget.blocks.isEmpty) {
-      blocks = [
-        BlockConfiguration(
-          name: "Block A",
-        )
-      ];
-    } else {
-      blocks = widget.blocks;
-    }
+    blocks = widget.blocks.isEmpty
+        ? [
+            BlockConfiguration(
+              name: "A",
+              floors: 1,
+              unitsPerFloor: 1,
+            )
+          ]
+        : widget.blocks;
   }
 
-  @override
-  void dispose() {
-    for (final block in blocks) {
-      block.dispose();
-    }
-    super.dispose();
-  }
-
-  void _notifyParent() {
+  void _notify() {
     widget.onChanged(blocks);
   }
 
   void _addBlock() {
     setState(() {
-      final letter =
-          String.fromCharCode(65 + blocks.length);
-
       blocks.add(
         BlockConfiguration(
-          name: "Block $letter",
+          name: String.fromCharCode(65 + blocks.length),
+          floors: 1,
+          unitsPerFloor: 1,
         ),
       );
     });
 
-    _notifyParent();
+    _notify();
   }
 
   void _removeBlock(int index) {
     if (blocks.length == 1) return;
 
+    blocks[index].dispose();
+
     setState(() {
-      blocks[index].dispose();
       blocks.removeAt(index);
     });
 
-    _notifyParent();
+    _notify();
   }
 
   int get totalUnits {
     int total = 0;
 
     for (final block in blocks) {
-      total += block.totalUnits;
+      total +=
+          block.floors * block.unitsPerFloor;
     }
 
     return total;
@@ -126,13 +110,15 @@ class _BlockConfigurationStepState
       int index,
       ) {
     return Card(
-      margin: const EdgeInsets.only(bottom: 18),
+      margin: const EdgeInsets.only(bottom: 16),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
+
             Row(
               children: [
+
                 Expanded(
                   child: Text(
                     "Block ${index + 1}",
@@ -142,40 +128,39 @@ class _BlockConfigurationStepState
                     ),
                   ),
                 ),
-                IconButton(
-                  onPressed: () =>
-                      _removeBlock(index),
-                  icon: const Icon(
-                    Icons.delete_outline,
-                    color: Colors.red,
+
+                if (blocks.length > 1)
+                  IconButton(
+                    onPressed: () =>
+                        _removeBlock(index),
+                    icon: const Icon(
+                      Icons.delete,
+                      color: Colors.red,
+                    ),
                   ),
-                ),
               ],
             ),
 
-            const SizedBox(height: 15),
+            const SizedBox(height: 16),
 
             TextField(
-              controller:
-                  block.nameController,
-              decoration:
-                  const InputDecoration(
+              controller: block.nameController,
+              decoration: const InputDecoration(
                 labelText: "Block Name",
-                border:
-                    OutlineInputBorder(),
+                border: OutlineInputBorder(),
               ),
-              onChanged: (_) =>
-                  _notifyParent(),
+              onChanged: (_) => _notify(),
             ),
 
-            const SizedBox(height: 15),
+            const SizedBox(height: 16),
 
             Row(
               children: [
+
                 Expanded(
                   child: TextField(
-                    controller: block
-                        .floorsController,
+                    controller:
+                        block.floorsController,
                     keyboardType:
                         TextInputType.number,
                     decoration:
@@ -186,17 +171,17 @@ class _BlockConfigurationStepState
                     ),
                     onChanged: (_) {
                       setState(() {});
-                      _notifyParent();
+                      _notify();
                     },
                   ),
                 ),
 
-                const SizedBox(width: 15),
+                const SizedBox(width: 12),
 
                 Expanded(
                   child: TextField(
-                    controller:
-                        block.unitsController,
+                    controller: block
+                        .unitsPerFloorController,
                     keyboardType:
                         TextInputType.number,
                     decoration:
@@ -208,145 +193,28 @@ class _BlockConfigurationStepState
                     ),
                     onChanged: (_) {
                       setState(() {});
-                      _notifyParent();
+                      _notify();
                     },
                   ),
                 ),
               ],
             ),
 
-            const SizedBox(height: 15),
+            const SizedBox(height: 16),
 
-            Container(
-              width: double.infinity,
-              padding:
-                  const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color:
-                    Colors.blue.shade50,
-                borderRadius:
-                    BorderRadius.circular(
-                        10),
-              ),
+            Align(
+              alignment: Alignment.centerLeft,
               child: Text(
-                "Total Units: ${block.totalUnits}",
-                style:
-                    const TextStyle(
+                "Units: ${block.floors * block.unitsPerFloor}",
+                style: const TextStyle(
+                  color: Colors.blue,
                   fontWeight:
-                     
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            "Block Configuration",
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-
-          const SizedBox(height: 8),
-
-          const Text(
-            "Configure each block in your property. Every block can have a different number of floors and units.",
-            style: TextStyle(
-              color: Colors.grey,
-            ),
-          ),
-
-          const SizedBox(height: 20),
-
-          Expanded(
-            child: ListView.builder(
-              itemCount: blocks.length,
-              itemBuilder: (context, index) {
-                return _buildBlockCard(
-                  blocks[index],
-                  index,
-                );
-              },
-            ),
-          ),
-
-          Card(
-            color: Colors.blue.shade50,
-            child: Padding(
-              padding: const EdgeInsets.all(18),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.apartment,
-                        color: Colors.blue,
-                      ),
-                      const SizedBox(width: 10),
-                      const Expanded(
-                        child: Text(
-                          "Property Summary",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  Row(
-                    mainAxisAlignment:
-                        MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text("Blocks"),
-                      Text(
-                        "${blocks.length}",
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const Divider(),
-
-                  Row(
-                    mainAxisAlignment:
-                        MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text("Total Units"),
-                      Text(
-                        "$totalUnits",
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue,
-                          fontSize: 18,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                      FontWeight.bold,
+                ),
               ),
             ),
-          ),
-
-          const SizedBox(height: 15),
-
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: _addBlock,
-              icon: const Icon(Icons.add),
-              label: const Text("Add Another Block"),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
-}
