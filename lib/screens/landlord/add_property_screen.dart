@@ -19,7 +19,17 @@ class AddPropertyScreen extends StatefulWidget {
 
   @override
   State<AddPropertyScreen> createState() =>
-      _AddPropertyScreenState();
+      _AddPropertyScreenState();List<BlockConfiguration> _blocks = [
+  BlockConfiguration(
+    name: "A",
+    floors: 1,
+    unitsPerFloor: 1,
+  ),
+];
+
+List<String> _amenities = [];
+
+String _propertyType = "apartment";
 }
 
 class _AddPropertyScreenState
