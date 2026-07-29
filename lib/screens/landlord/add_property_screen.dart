@@ -90,9 +90,12 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
   }
 
   Future<void> _submit() async {
-    if (_title.text.isEmpty || _rent.text.isEmpty || _lat == null || _lng == null) {
+    final cleanedRent = _rent.text.replaceAll(',', '').trim();
+    final rentAmount = double.tryParse(cleanedRent);
+
+    if (_title.text.isEmpty || cleanedRent.isEmpty || rentAmount == null || _lat == null || _lng == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Title, rent amount, and GPS location are required.')),
+        const SnackBar(content: Text('Title, a valid rent amount, and GPS location are required.')),
       );
       return;
     }
@@ -107,9 +110,9 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
         'address': _address.text.trim(),
         'latitude': _lat,
         'longitude': _lng,
-        'bedrooms': int.tryParse(_bedrooms.text) ?? 1,
-        'bathrooms': int.tryParse(_bathrooms.text) ?? 1,
-        'rent_amount': double.tryParse(_rent.text) ?? 0,
+        'bedrooms': int.tryParse(_bedrooms.text.replaceAll(',', '').trim()) ?? 1,
+        'bathrooms': int.tryParse(_bathrooms.text.replaceAll(',', '').trim()) ?? 1,
+        'rent_amount': rentAmount,
       };
 
       late final String propertyId;
