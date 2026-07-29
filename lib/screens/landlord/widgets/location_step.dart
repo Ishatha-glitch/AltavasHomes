@@ -30,214 +30,182 @@ class LocationStep extends StatefulWidget {
 }
 
 class _LocationStepState extends State<LocationStep> {
-  bool _capturing = false;
+  bool _loadingLocation = false;
 
   Future<void> _captureLocation() async {
     setState(() {
-      _capturing = true;
+      _loadingLocation = true;
     });
 
     try {
+      bool enabled = await Geolocator.isLocationServiceEnabled();
+
+      if (!enabled) {
+        throw Exception("Location services are disabled.");
+      }
+
       LocationPermission permission =
           await Geolocator.checkPermission();
 
       if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
+        permission =
+            await Geolocator.requestPermission();
       }
 
       if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                "Location permission is required.",
-              ),
-            ),
-          );
-        }
-
-        setState(() {
-          _capturing = false;
-        });
-
-        return;
+          permission ==
+              LocationPermission.deniedForever) {
+        throw Exception("Location permission denied.");
       }
 
       final position =
-          await Geolocator.getCurrentPosition();
+          await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
 
       widget.onLocationCaptured(
         position.latitude,
         position.longitude,
       );
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              "GPS location captured successfully.",
-            ),
-          ),
-        );
-      }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              "Failed to capture location: $e",
-            ),
-          ),
-        );
-      }
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+        ),
+      );
     }
 
     if (mounted) {
       setState(() {
-        _capturing = false;
+        _loadingLocation = false;
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(20),
-      children: [
-        const Text(
-          "Property Location",
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "Property Location",
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-        ),
 
-        const SizedBox(height: 8),
+          const SizedBox(height: 10),
 
-        const Text(
-          "Enter the physical location of the property.",
-          style: TextStyle(
-            color: Colors.grey,
+          const Text(
+            "Enter the property's address and capture its GPS location.",
+            style: TextStyle(
+              color: Colors.grey,
+            ),
           ),
-        ),
 
-        const SizedBox(height: 24),
+          const SizedBox(height: 24),
 
-        TextFormField(
-          controller: widget.countryController,
-          decoration: const InputDecoration(
-            labelText: "Country",
-            border: OutlineInputBorder(),
-            prefixIcon: Icon(Icons.public),
+          TextFormField(
+            controller: widget.countryController,
+            decoration: const InputDecoration(
+              labelText: "Country",
+              border: OutlineInputBorder(),
+            ),
+            validator: (value) =>
+                value == null || value.isEmpty
+                    ? "Country is required"
+                    : null,
           ),
-          validator: (value) {
-            if (value == null || value.trim().isEmpty) {
-              return "Country is required";
-            }
-            return null;
-          },
-        ),
 
-        const SizedBox(height: 16),
+          const SizedBox(height: 16),
 
-        TextFormField(
-          controller: widget.countyController,
-          decoration: const InputDecoration(
-            labelText: "County / State",
-            border: OutlineInputBorder(),
-            prefixIcon: Icon(Icons.map),
+          TextFormField(
+            controller: widget.countyController,
+            decoration: const InputDecoration(
+              labelText: "County / State",
+              border: OutlineInputBorder(),
+            ),
+            validator: (value) =>
+                value == null || value.isEmpty
+                    ? "County is required"
+                    : null,
           ),
-          validator: (value) {
-            if (value == null || value.trim().isEmpty) {
-              return "County is required";
-            }
-            return null;
-          },
-        ),
 
-        const SizedBox(height: 16),
+          const SizedBox(height: 16),
 
-        TextFormField(
-          controller: widget.townController,
-          decoration: const InputDecoration(
-            labelText: "Town / City",
-            border: OutlineInputBorder(),
-            prefixIcon: Icon(Icons.location_city),
+          TextFormField(
+            controller: widget.townController,
+            decoration: const InputDecoration(
+              labelText: "Town / City",
+              border: OutlineInputBorder(),
+            ),
+            validator: (value) =>
+                value == null || value.isEmpty
+                    ? "Town is required"
+                    : null,
           ),
-          validator: (value) {
-            if (value == null || value.trim().isEmpty) {
-              return "Town is required";
-            }
-            return null;
-          },
-        ),
 
-        const SizedBox(height: 16),
+          const SizedBox(height: 16),
 
-        TextFormField(
-          controller: widget.estateController,
-          decoration: const InputDecoration(
-            labelText: "Estate / Neighborhood",
-            border: OutlineInputBorder(),
-            prefixIcon: Icon(Icons.location_on),
+          TextFormField(
+            controller: widget.estateController,
+            decoration: const InputDecoration(
+              labelText: "Estate / Neighborhood",
+              border: OutlineInputBorder(),
+            ),
           ),
-        ),
 
-        const SizedBox(height: 16),
+          const SizedBox(height: 16),
 
-        TextFormField(
-          controller: widget.streetController,
-          decoration: const InputDecoration(
-            labelText: "Street",
-            border: OutlineInputBorder(),
-            prefixIcon: Icon(Icons.route),
+          TextFormField(
+            controller: widget.streetController,
+            decoration: const InputDecoration(
+              labelText: "Street / Road",
+              border: OutlineInputBorder(),
+            ),
           ),
-        ),
 
-        const SizedBox(height: 24),
+          const SizedBox(height: 24),
 
-        FilledButton.icon(
-          onPressed: _capturing ? null : _captureLocation,
-          icon: const Icon(Icons.my_location),
-          label: Text(
-            _capturing
-                ? "Capturing..."
-                : "Capture GPS Location",
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed:
+                  _loadingLocation ? null : _captureLocation,
+              icon: const Icon(Icons.my_location),
+              label: Text(
+                _loadingLocation
+                    ? "Capturing..."
+                    : "Capture GPS Location",
+              ),
+            ),
           ),
-        ),
 
-        const SizedBox(height: 20),
+          const SizedBox(height: 20),
 
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: widget.latitude == null
-                ? const Text(
-                    "No GPS location captured yet.",
-                  )
-                : Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "GPS Coordinates",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        "Latitude: ${widget.latitude!.toStringAsFixed(6)}",
-                      ),
-                      Text(
-                        "Longitude: ${widget.longitude!.toStringAsFixed(6)}",
-                      ),
-                    ],
-                  ),
-          ),
-        ),
-      ],
+          if (widget.latitude != null &&
+              widget.longitude != null)
+            Card(
+              child: ListTile(
+                leading: const Icon(
+                  Icons.location_on,
+                  color: Colors.green,
+                ),
+                title: const Text(
+                  "GPS Location Captured",
+                ),
+                subtitle: Text(
+                  "Latitude: ${widget.latitude}\nLongitude: ${widget.longitude}",
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
