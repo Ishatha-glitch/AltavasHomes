@@ -148,21 +148,9 @@ GoRouter buildRouter(AuthProvider auth) {
       ),
 
       GoRoute(
-        path: '/landlord/add-property',
-        builder: (context, state) {
-
-          Map<String, dynamic>? property;
-
-          if (state.extra != null &&
-              state.extra is Map<String, dynamic>) {
-            property = state.extra as Map<String, dynamic>;
-          }
-
-          return AddPropertyScreen(
-            property: property,
-          );
-        },
-      ),
+  path: '/landlord/add-property',
+  builder: (_, __) => const AddPropertyScreen(),
+),
 
       GoRoute(
         path: '/landlord/requests',
