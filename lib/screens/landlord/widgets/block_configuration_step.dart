@@ -218,3 +218,102 @@ class _BlockConfigurationStepState
       ),
     );
   }
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "Apartment / Block Configuration",
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+
+          const SizedBox(height: 8),
+
+          const Text(
+            "Configure all apartment blocks and the number of units in each block.",
+            style: TextStyle(
+              color: Colors.grey,
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          ...List.generate(
+            blocks.length,
+            (index) => _buildBlockCard(
+              blocks[index],
+              index,
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _addBlock,
+              icon: const Icon(Icons.add),
+              label: const Text(
+                "Add Another Block",
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          Card(
+            color: Colors.blue.shade50,
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  const Icon(
+                    Icons.apartment,
+                    size: 50,
+                    color: Colors.blue,
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  Text(
+                    "$totalUnits Total Units",
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  Text(
+                    "${blocks.length} Block(s)",
+                    style: const TextStyle(
+                      color: Colors.grey,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          const Card(
+            child: ListTile(
+              leading: Icon(
+                Icons.info_outline,
+                color: Colors.orange,
+              ),
+              title: Text("Example"),
+              subtitle: Text(
+                "Block A\n"
+                "• 4 Floors\n"
+                "• 8 Units per Floor\n\n"
+                "Creates 32 apartments automatically.\n\n"
+                "Apartment numbers:\n"
+                "A101, A102
