@@ -1,95 +1,101 @@
 import 'package:flutter/material.dart';
 
-import 'block_configuration_step.dart';
-
 class UnitPreviewStep extends StatelessWidget {
-  final List<BlockConfiguration> blocks;
+  final List<Map<String, dynamic>> units;
+  final ValueChanged<List<Map<String, dynamic>>> onChanged;
 
   const UnitPreviewStep({
     super.key,
-    required this.blocks,
+    required this.units,
+    required this.onChanged,
   });
-
-  List<String> _generateUnits() {
-    final List<String> units = [];
-
-    for (final block in blocks) {
-      final blockName = block.blockName.isEmpty
-          ? "A"
-          : block.blockName.toUpperCase();
-
-      for (int floor = 1; floor <= block.floors; floor++) {
-        for (int unit = 1; unit <= block.unitsPerFloor; unit++) {
-          units.add(
-            "$blockName${floor.toString()}${unit.toString().padLeft(2, '0')}",
-          );
-        }
-      }
-    }
-
-    return units;
-  }
 
   @override
   Widget build(BuildContext context) {
-    final units = _generateUnits();
+    if (units.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Text(
+            "No units generated yet.\nGo back to the Blocks step to configure your property.",
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          "Unit Preview",
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-
-        const SizedBox(height: 8),
-
-        const Text(
-          "These are the units that will be created automatically.",
-          style: TextStyle(
-            color: Colors.grey,
-          ),
-        ),
-
-        const SizedBox(height: 20),
 
         Card(
+          color: Colors.blue.shade50,
           child: ListTile(
-            leading: const Icon(
-              Icons.apartment,
-              color: Colors.blue,
+            leading: const Icon(Icons.home_work),
+            title: Text(
+              "${units.length} Units Generated",
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
             ),
-            title: Text("${units.length} Units"),
             subtitle: const Text(
-              "Every unit will have its own tenant, rent records and maintenance history.",
+              "These are the houses that tenants will rent.",
             ),
           ),
         ),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 12),
 
         Expanded(
-          child: GridView.builder(
+          child: ListView.separated(
             itemCount: units.length,
-            gridDelegate:
-                const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 4,
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-              childAspectRatio: 2.2,
-            ),
+            separatorBuilder: (_, __) =>
+                const Divider(height: 1),
             itemBuilder: (context, index) {
+              final unit = units[index];
+
               return Card(
-                elevation: 2,
-                child: Center(
-                  child: Text(
-                    units[index],
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
+                child: ListTile(
+                  leading: CircleAvatar(
+                    child: Text(
+                      unit["block"].toString(),
                     ),
+                  ),
+
+                  title: Text(
+                    "House ${unit["unit_number"]}",
+                  ),
+
+                  subtitle: Text(
+                    "Floor ${unit["floor"]}",
+                  ),
+
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+
+                      Icon(
+                        unit["occupied"]
+                            ? Icons.person
+                            : Icons.home_outlined,
+                        color: unit["occupied"]
+                            ? Colors.red
+                            : Colors.green,
+                      ),
+
+                      const SizedBox(width: 8),
+
+                      Text(
+                        unit["occupied"]
+                            ? "Occupied"
+                            : "Vacant",
+                        style: TextStyle(
+                          color: unit["occupied"]
+                              ? Colors.red
+                              : Colors.green,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               );
