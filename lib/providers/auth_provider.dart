@@ -109,12 +109,13 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<bool> signUp({
-    required String email,
-    required String password,
-    required String fullName,
-    required String phone,
-    required String role,
-  }) async {
+  required String email,
+  required String password,
+  required String fullName,
+  required String phone,
+  required String role,
+  String? serviceCategory,
+}) async {
     try {
       _busy = true;
       _error = null;
