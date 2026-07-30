@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
-
-import '../../providers/auth_provider.dart';
-import '../../services/db.dart';
-import '../../widgets/rent_progress_bar.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class LandlordDashboard extends StatefulWidget {
   const LandlordDashboard({super.key});
@@ -14,266 +10,230 @@ class LandlordDashboard extends StatefulWidget {
 }
 
 class _LandlordDashboardState extends State<LandlordDashboard> {
-  List<Map<String, dynamic>> _properties = [];
+
+  final _client = Supabase.instance.client;
+
   bool _loading = true;
+
+  List<Map<String, dynamic>> _properties = [];
+
+  int _totalUnits = 0;
+  int _occupiedUnits = 0;
+  int _vacantUnits = 0;
 
   @override
   void initState() {
     super.initState();
-    _load();
+    _loadDashboard();
   }
 
-  Future<void> _load() async {
-    setState(() => _loading = true);
-
+  Future<void> _loadDashboard() async {
     try {
-      final profile = context.read<AuthProvider>().profile;
-      if (profile == null) {
-        throw Exception('No profile loaded');
-      }
+      final user = _client.auth.currentUser!;
 
-      final data = await Db.client
+      final properties = await _client
           .from('properties')
-          .select('*, leases(id, tenant_id, monthly_rent, active, profiles!leases_tenant_id_fkey(full_name))')
-          .eq('landlord_id', profile['id'])
-          .order('created_at', ascending: false);
+          .select()
+          .eq('landlord_id', user.id)
+          .order('created_at');
 
-      final properties = List<Map<String, dynamic>>.from(data);
+      final units = await _client
+          .from('property_units')
+          .select()
+          .inFilter(
+            'property_id',
+            properties.map((e) => e['id']).toList(),
+          );
 
-      final activeLeaseIds = <String>[];
-      for (final p in properties) {
-        final leases = List<Map<String, dynamic>>.from(p['leases'] ?? []);
-        final activeLease = leases.where((l) => l['active'] == true).firstOrNull;
-        p['activeLease'] = activeLease;
-        if (activeLease != null) {
-          activeLeaseIds.add(activeLease['id'] as String);
-        }
-      }
+      _totalUnits = units.length;
+      _occupiedUnits =
+          units.where((u) => u['occupied'] == true).length;
+      _vacantUnits =
+          units.where((u) => u['occupied'] == false).length;
 
-      if (activeLeaseIds.isNotEmpty) {
-        final progressRows = await Db.client
-            .from('lease_payment_progress')
-            .select()
-            .inFilter('lease_id', activeLeaseIds);
-
-        final progressByLeaseId = <String, Map<String, dynamic>>{
-          for (final row in List<Map<String, dynamic>>.from(progressRows))
-            row['lease_id'] as String: row,
-        };
-
-        for (final p in properties) {
-          final activeLease = p['activeLease'];
-          if (activeLease != null) {
-            p['progress'] = progressByLeaseId[activeLease['id']];
-          }
-        }
-      }
-
-      if (!mounted) return;
       setState(() {
-        _properties = properties;
+        _properties =
+            List<Map<String, dynamic>>.from(properties);
         _loading = false;
       });
     } catch (e) {
-      if (!mounted) return;
-      setState(() => _loading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      setState(() {
+        _loading = false;
+      });
     }
   }
 
-  Future<void> _removeTenant(Map<String, dynamic> property, Map<String, dynamic> lease) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Remove tenant?'),
-        content: Text('This marks "${property['title'] ?? 'this property'}" vacant again and ends the current lease. Past payment history is kept.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Remove', style: TextStyle(color: Color(0xFFEF4444))),
+  Widget statCard(
+      String title,
+      String value,
+      IconData icon,
+      Color color,
+      ) {
+    return Expanded(
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            children: [
+
+              Icon(
+                icon,
+                color: color,
+                size: 32,
+              ),
+
+              const SizedBox(height: 10),
+
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              Text(title),
+            ],
           ),
-        ],
+        ),
       ),
     );
-
-    if (confirmed != true) return;
-
-    try {
-      await Db.client.from('leases').update({
-        'active': false,
-        'ended_at': DateTime.now().toIso8601String(),
-      }).eq('id', lease['id']);
-      await Db.client.from('properties').update({'status': 'vacant'}).eq('id', property['id']);
-      _load();
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not remove tenant: $e')),
-      );
-    }
-  }
-
-  Future<void> _deleteProperty(Map<String, dynamic> property) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete property?'),
-        content: Text('This permanently removes "${property['title'] ?? 'this property'}". This can\'t be undone.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete', style: TextStyle(color: Color(0xFFEF4444))),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed != true) return;
-
-    try {
-      await Db.client.from('properties').delete().eq('id', property['id']);
-      _load();
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not delete: $e')),
-      );
-    }
-  }
-
-  Future<void> _toggleVacancy(Map<String, dynamic> property) async {
-    final newStatus = property['status'] == 'vacant' ? 'occupied' : 'vacant';
-    try {
-      await Db.client.from('properties').update({'status': newStatus}).eq('id', property['id']);
-      _load();
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not update status. Check your connection.')),
-      );
-    }
-  }
-
-  String _formatAmount(dynamic amount) {
-    final value = (amount as num?)?.toDouble() ?? 0;
-    return value == value.roundToDouble()
-        ? value.toInt().toString()
-        : value.toStringAsFixed(2);
   }
 
   @override
   Widget build(BuildContext context) {
-    final auth = context.watch<AuthProvider>();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Properties'),
-        actions: [
-          TextButton.icon(
-            onPressed: () async {
-              await context.push('/landlord/add-property');
-              _load();
-            },
-            icon: const Icon(Icons.add, color: Colors.white),
-            label: const Text('Add', style: TextStyle(color: Colors.white)),
-          ),
-          IconButton(
-            icon: const Icon(Icons.inbox_outlined, color: Colors.white),
-            tooltip: 'Rental requests',
-            onPressed: () async {
-              await context.push('/landlord/requests');
-              _load();
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.person_outline, color: Colors.white),
-            tooltip: 'My profile',
-            onPressed: () => context.push('/profile'),
-          ),
-          IconButton(icon: const Icon(Icons.logout), onPressed: auth.signOut),
-        ],
-      ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _properties.isEmpty
-              ? const Center(child: Text('No properties listed yet.', style: TextStyle(color: Colors.grey)))
-              : RefreshIndicator(
-                  onRefresh: _load,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _properties.length,
-                    itemBuilder: (context, i) {
-                      final p = _properties[i];
-                      final isVacant = p['status'] == 'vacant';
-                      final activeLease = p['activeLease'];
-                      final progress = p['progress'];
-                      final percentPaid = (progress?['percent_paid'] as num?)?.toDouble() ?? 0;
 
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Expanded(child: Text(p['title'] ?? '', style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold))),
-                                  Row(
-                                    children: [
-                                      Text(isVacant ? 'Vacant' : 'Occupied', style: TextStyle(color: isVacant ? const Color(0xFF16A34A) : const Color(0xFFEF4444), fontWeight: FontWeight.w600)),
-                                      Switch(value: !isVacant, onChanged: (_) => _toggleVacancy(p)),
-                                      PopupMenuButton<String>(
-                                        onSelected: (value) async {
-                                          if (value == 'edit') {
-                                            await context.push('/landlord/add-property', extra: p);
-                                            _load();
-                                          } else if (value == 'remove_tenant') {
-                                            _removeTenant(p, activeLease);
-                                          } else if (value == 'delete') {
-                                            _deleteProperty(p);
-                                          }
-                                        },
-                                        itemBuilder: (context) => [
-                                          const PopupMenuItem(value: 'edit', child: Text('Edit')),
-                                          if (activeLease != null)
-                                            const PopupMenuItem(value: 'remove_tenant', child: Text('Remove tenant')),
-                                          const PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: Color(0xFFEF4444)))),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                              Text(p['address'] ?? '', style: const TextStyle(color: Colors.grey)),
-                              const SizedBox(height: 6),
-                              Text('Rent: ${p['currency']} ${_formatAmount(p['rent_amount'])}/mo', style: const TextStyle(fontWeight: FontWeight.w600)),
-                              const Divider(height: 24),
-                              if (activeLease != null) ...[
-                                Text('Tenant: ${activeLease['profiles']?['full_name'] ?? 'Unnamed'}', style: const TextStyle(fontWeight: FontWeight.w600)),
-                                const SizedBox(height: 4),
-                                Text('Paid this month: ${_formatAmount(progress?['paid_amount'] ?? 0)} / ${_formatAmount(activeLease['monthly_rent'])}'),
-                                const SizedBox(height: 8),
-                                RentProgressBar(percent: percentPaid.toDouble()),
-                              ] else
-                                const Text('No tenant assigned yet', style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic)),
-                            ],
-                          ),
-                        ),
+      appBar: AppBar(
+        title: const Text("Landlord Dashboard"),
+      ),
+
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          context.push('/landlord/add-property');
+        },
+        icon: const Icon(Icons.add),
+        label: const Text("Property"),
+      ),
+
+      body: _loading
+          ? const Center(
+        child: CircularProgressIndicator(),
+      )
+          : RefreshIndicator(
+
+        onRefresh: _loadDashboard,
+
+        child: ListView(
+
+          padding: const EdgeInsets.all(16),
+
+          children: [
+
+            Row(
+              children: [
+
+                statCard(
+                  "Properties",
+                  _properties.length.toString(),
+                  Icons.home_work,
+                  Colors.blue,
+                ),
+
+                const SizedBox(width: 12),
+
+                statCard(
+                  "Units",
+                  _totalUnits.toString(),
+                  Icons.apartment,
+                  Colors.orange,
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
+            Row(
+              children: [
+
+                statCard(
+                  "Occupied",
+                  _occupiedUnits.toString(),
+                  Icons.people,
+                  Colors.green,
+                ),
+
+                const SizedBox(width: 12),
+
+                statCard(
+                  "Vacant",
+                  _vacantUnits.toString(),
+                  Icons.home,
+                  Colors.red,
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 25),
+
+            const Text(
+              "My Properties",
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            const SizedBox(height: 15),
+
+            if (_properties.isEmpty)
+
+              const Card(
+                child: Padding(
+                  padding: EdgeInsets.all(40),
+                  child: Center(
+                    child: Text(
+                      "No properties added yet.",
+                    ),
+                  ),
+                ),
+              )
+
+            else
+
+              ..._properties.map(
+                    (property) => Card(
+                  child: ListTile(
+
+                    leading: const CircleAvatar(
+                      child: Icon(Icons.home_work),
+                    ),
+
+                    title: Text(
+                      property["name"] ?? "",
+                    ),
+
+                    subtitle: Text(
+                      property["property_type"] ?? "",
+                    ),
+
+                    trailing: const Icon(
+                      Icons.arrow_forward_ios,
+                    ),
+
+                    onTap: () {
+                      context.push(
+                        "/landlord/property",
+                        extra: property,
                       );
                     },
                   ),
                 ),
+              ),
+          ],
+        ),
+      ),
     );
   }
-}
-
-extension _FirstOrNull<T> on Iterable<T> {
-  T? get firstOrNull => isEmpty ? null : first;
 }
