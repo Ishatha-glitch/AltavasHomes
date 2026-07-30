@@ -125,10 +125,11 @@ class AuthProvider extends ChangeNotifier {
         email: email,
         password: password,
         data: {
-          'full_name': fullName,
-          'phone': phone,
-          'role': role,
-        },
+  'full_name': fullName,
+  'phone': phone,
+  'role': role,
+  'service_category': serviceCategory,
+},
       );
 
       if (response.user != null) {
