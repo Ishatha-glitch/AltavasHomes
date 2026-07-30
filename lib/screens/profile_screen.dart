@@ -43,7 +43,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
 
       await Db.client.from('profiles').update(updates).eq('id', profileId);
-      await auth.reloadProfile();
+      await auth.refreshProfile();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
