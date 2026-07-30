@@ -3,9 +3,10 @@ import 'dart:typed_data';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class PropertyService {
-  static final _db = Supabase.instance.client;
+  static final SupabaseClient _supabase =
+      Supabase.instance.client;
 
-  // Create a property
+  // Create Property
   static Future<String> createProperty({
     required String landlordId,
     required String propertyName,
@@ -19,11 +20,11 @@ class PropertyService {
     required double latitude,
     required double longitude,
   }) async {
-    final response = await _db
+    final response = await _supabase
         .from('properties')
         .insert({
           'landlord_id': landlordId,
-          'name': propertyName,
+          'property_name': propertyName,
           'property_type': propertyType,
           'description': description,
           'country': country,
@@ -33,85 +34,88 @@ class PropertyService {
           'street': street,
           'latitude': latitude,
           'longitude': longitude,
-          'published': false,
+          'status': 'draft',
         })
         .select()
         .single();
 
-    return response['id'] as String;
+    return response['id'];
   }
 
-  // Save amenities
+  // Save Amenities
   static Future<void> saveAmenities({
     required String propertyId,
     required List<String> amenities,
   }) async {
     if (amenities.isEmpty) return;
 
-    final rows = amenities
-        .map((item) => {
-              'property_id': propertyId,
-              'amenity': item,
-            })
-        .toList();
-
-    await _db.from('property_amenities').insert(rows);
+    await _supabase
+        .from('properties')
+        .update({
+          'amenities': amenities,
+        })
+        .eq('id', propertyId);
   }
 
-  // Save apartment blocks
+  // Save Blocks
   static Future<void> saveBlocks({
     required String propertyId,
     required List<Map<String, dynamic>> blocks,
   }) async {
     if (blocks.isEmpty) return;
 
-    final rows = blocks
-        .map((block) => {
-              'property_id': propertyId,
-              'block_name': block['name'],
-              'floors': block['floors'],
-            })
-        .toList();
-
-    await _db.from('property_blocks').insert(rows);
+    for (final block in blocks) {
+      await _supabase
+          .from('property_blocks')
+          .insert({
+            'property_id': propertyId,
+            'name': block['name'],
+            'floors': block['floors'],
+          });
+    }
   }
 
-  // Save generated units
+  // Save Units
   static Future<void> saveUnits({
     required String propertyId,
     required List<Map<String, dynamic>> units,
   }) async {
     if (units.isEmpty) return;
 
-    final rows = units
-        .map((unit) => {
-              'property_id': propertyId,
-              'block_name': unit['block'],
-              'floor': unit['floor'],
-              'unit_number': unit['unit_number'],
-              'occupied': unit['occupied'],
-            })
-        .toList();
-
-    await _db.from('property_units').insert(rows);
+    for (final unit in units) {
+      await _supabase
+          .from('property_units')
+          .insert({
+            'property_id': propertyId,
+            ...unit,
+          });
+    }
   }
 
-  // Upload property images
+  // Upload Images
   static Future<List<String>> uploadImages({
     required String propertyId,
     required List<Uint8List> images,
   }) async {
-    final urls = <String>[];
+    List<String> urls = [];
 
     for (int i = 0; i < images.length; i++) {
-      final path = '$propertyId/image_$i.jpg';
+      final path =
+          '$propertyId/image_$i.jpg';
 
-      await _db.storage
+      await _supabase.storage
           .from('property-images')
-          .uploadBinary(path, images[i]);
+          .uploadBinary(
+            path,
+            images[i],
+            fileOptions: const FileOptions(
+              upsert: true,
+              contentType: 'image/jpeg',
+            ),
+          );
 
       urls.add(
-        _db.storage
+        _supabase.storage
             .from('property-images')
             .getPublicUrl(path),
       );
@@ -120,31 +124,27 @@ class PropertyService {
     return urls;
   }
 
-  // Save image URLs
+  // Save Image URLs
   static Future<void> saveImages({
     required String propertyId,
     required List<String> imageUrls,
   }) async {
-    if (imageUrls.isEmpty) return;
-
-    final rows = imageUrls
-        .map((url) => {
-              'property_id': propertyId,
-              'image_url': url,
-            })
-        .toList();
-
-    await _db.from('property_images').insert(rows);
+    await _supabase
+        .from('properties')
+        .update({
+          'images': imageUrls,
+        })
+        .eq('id', propertyId);
   }
 
-  // Publish property
+  // Publish Property
   static Future<void> publishProperty(
     String propertyId,
   ) async {
-    await _db
+    await _supabase
         .from('properties')
         .update({
-          'published': true,
+          'status': 'published',
         })
         .eq('id', propertyId);
   }
