@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../../providers/auth_provider.dart';
 import '../../services/property_service.dart';
+import '../../models/property_block.dart';
 
 import 'widgets/amenities_step.dart';
 import 'widgets/block_configuration_step.dart';
