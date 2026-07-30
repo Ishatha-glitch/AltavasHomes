@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
-class LandlordPropertyDetails extends StatefulWidget {
+class LandlordPropertyDetails extends StatelessWidget {
   final Map<String, dynamic> property;
 
   const LandlordPropertyDetails({
@@ -10,124 +9,108 @@ class LandlordPropertyDetails extends StatefulWidget {
   });
 
   @override
-  State<LandlordPropertyDetails> createState() =>
-      _LandlordPropertyDetailsState();
-}
-
-class _LandlordPropertyDetailsState
-    extends State<LandlordPropertyDetails> {
-
-  final _client = Supabase.instance.client;
-
-  bool _loading = true;
-
-  List<Map<String, dynamic>> _units = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _loadUnits();
-  }
-
-  Future<void> _loadUnits() async {
-    final data = await _client
-        .from("property_units")
-        .select()
-        .eq("property_id", widget.property["id"])
-        .order("block_name")
-        .order("floor")
-        .order("unit_number");
-
-    setState(() {
-      _units = List<Map<String, dynamic>>.from(data);
-      _loading = false;
-    });
-  }
-
-  Color statusColor(bool occupied) {
-    return occupied ? Colors.red : Colors.green;
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final images =
+        List<String>.from(property['images'] ?? []);
 
     return Scaffold(
-
       appBar: AppBar(
-        title: Text(widget.property["name"]),
+        title: Text(
+          property['property_name'] ??
+              property['title'] ??
+              'Property',
+        ),
       ),
+      body: ListView(
+        children: [
 
-      body: _loading
-          ? const Center(
-              child: CircularProgressIndicator(),
+          if (images.isNotEmpty)
+            SizedBox(
+              height: 250,
+              child: PageView.builder(
+                itemCount: images.length,
+                itemBuilder: (context, index) {
+                  return Image.network(
+                    images[index],
+                    fit: BoxFit.cover,
+                  );
+                },
+              ),
             )
-          : ListView(
+          else
+            Container(
+              height: 250,
+              color: Colors.grey.shade300,
+              child: const Center(
+                child: Icon(
+                  Icons.home,
+                  size: 80,
+                ),
+              ),
+            ),
 
-              padding: const EdgeInsets.all(16),
-
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
               children: [
 
-                Card(
-                  child: ListTile(
-                    leading: const Icon(Icons.home_work),
-                    title: Text(widget.property["name"]),
-                    subtitle: Text(
-                      widget.property["property_type"],
-                    ),
+                Text(
+                  property['property_name'] ??
+                      property['title'] ??
+                      '',
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                Text(
+                  property['property_type'] ?? '',
+                  style: const TextStyle(
+                    fontSize: 18,
                   ),
                 ),
 
                 const SizedBox(height: 20),
 
                 Text(
-                  "Units (${_units.length})",
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
+                  property['description'] ?? '',
+                ),
+
+                const SizedBox(height: 30),
+
+                ListTile(
+                  leading: const Icon(Icons.location_on),
+                  title: Text(
+                    property['estate'] ??
+                        property['town'] ??
+                        '',
                   ),
                 ),
 
-                const SizedBox(height: 15),
+                ListTile(
+                  leading: const Icon(Icons.apartment),
+                  title: Text(
+                    "${property['total_units'] ?? 0} Units",
+                  ),
+                ),
 
-                ..._units.map(
-                  (unit) => Card(
-                    child: ListTile(
-
-                      leading: CircleAvatar(
-                        child: Text(unit["block_name"]),
-                      ),
-
-                      title: Text(
-                        "House ${unit["unit_number"]}",
-                      ),
-
-                      subtitle: Text(
-                        "Floor ${unit["floor"]}",
-                      ),
-
-                      trailing: Chip(
-                        backgroundColor: statusColor(
-                          unit["occupied"],
-                        ),
-                        label: Text(
-                          unit["occupied"]
-                              ? "Occupied"
-                              : "Vacant",
-                          style: const TextStyle(
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-
-                      onTap: () {
-                        // Next step:
-                        // Open Unit Details Screen
-                      },
-                    ),
+                ListTile(
+                  leading: const Icon(Icons.check_circle),
+                  title: Text(
+                    property['status'] ??
+                        'Draft',
                   ),
                 ),
               ],
             ),
+          ),
+        ],
+      ),
     );
   }
 }
