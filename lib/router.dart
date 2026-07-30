@@ -153,6 +153,20 @@ GoRouter buildRouter(AuthProvider auth) {
   builder: (_, __) => const AddPropertyScreen(),
 ),
 
+     GoRoute(
+  path: '/landlord/property',
+  builder: (context, state) {
+    if (state.extra == null ||
+        state.extra is! Map<String, dynamic>) {
+      return const NotFoundScreen();
+    }
+
+    return LandlordPropertyDetails(
+      property: state.extra as Map<String, dynamic>,
+    );
+  },
+),
+      
       GoRoute(
         path: '/landlord/requests',
         builder: (_, __) => const PendingRequestsScreen(),
