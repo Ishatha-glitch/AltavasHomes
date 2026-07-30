@@ -1,204 +1,88 @@
-import 'dart:async';
-
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthProvider extends ChangeNotifier {
-  final SupabaseClient _client = Supabase.instance.client;
+  final SupabaseClient _supabase = Supabase.instance.client;
 
   Session? _session;
   Map<String, dynamic>? _profile;
-
   bool _loading = true;
-  bool _busy = false;
 
-  String? _error;
+  Session? get session => _session;
+  Map<String, dynamic>? get profile => _profile;
+  bool get loading => _loading;
 
-  StreamSubscription<AuthState>? _authSubscription;
+  String? get role => _profile?['role'];
 
   AuthProvider() {
     _initialize();
   }
 
-  //=============================
-  // GETTERS
-  //=============================
-
-  Session? get session => _session;
-
-  User? get user => _session?.user;
-
-  Map<String, dynamic>? get profile => _profile;
-
-  bool get loading => _loading;
-
-  bool get busy => _busy;
-
-  String? get error => _error;
-
-  String? get role => _profile?['role'] as String?;
-
-  bool get isLoggedIn => _session != null;
-
-  //=============================
-  // INITIALIZATION
-  //=============================
-
   Future<void> _initialize() async {
-    try {
-      _session = _client.auth.currentSession;
+    _session = _supabase.auth.currentSession;
 
-      if (_session != null) {
-        await _loadProfile();
-      }
-
-      _authSubscription =
-          _client.auth.onAuthStateChange.listen((event) async {
-        _session = event.session;
-
-        if (_session != null) {
-          await _loadProfile();
-        } else {
-          _profile = null;
-        }
-
-        notifyListeners();
-      });
-    } catch (e) {
-      _error = e.toString();
-    } finally {
+    if (_session != null) {
+      await _loadProfile();
+    } else {
       _loading = false;
       notifyListeners();
     }
-  }
 
-  //=============================
-  // PROFILE
-  //=============================
+    _supabase.auth.onAuthStateChange.listen((data) async {
+      _session = data.session;
+
+      if (_session != null) {
+        await _loadProfile();
+      } else {
+        _profile = null;
+        _loading = false;
+        notifyListeners();
+      }
+    });
+  }
 
   Future<void> _loadProfile() async {
-    if (_session == null) return;
-
     try {
-      final data = await _client
+      final user = _supabase.auth.currentUser;
+
+      if (user == null) {
+        _profile = null;
+        _loading = false;
+        notifyListeners();
+        return;
+      }
+
+      final response = await _supabase
           .from('profiles')
           .select()
-          .eq('id', _session!.user.id)
-          .maybeSingle();
+          .eq('id', user.id)
+          .single();
 
-      _profile = data;
+      _profile = Map<String, dynamic>.from(response);
     } catch (e) {
-      _error = e.toString();
+      debugPrint("Profile loading error: $e");
+      _profile = null;
     }
-  }
 
-  Future<void> reloadProfile() async {
-    await _loadProfile();
+    _loading = false;
     notifyListeners();
-  }
-
-  //=============================
-  // AUTH
-  //=============================
-
-  Future<AuthResponse> signUp({
-    required String email,
-    required String password,
-    required String fullName,
-    required String phone,
-    required String role,
-    String? serviceCategory,
-  }) async {
-    _busy = true;
-    _error = null;
-    notifyListeners();
-
-    try {
-      return await _client.auth.signUp(
-        email: email,
-        password: password,
-        data: {
-          'full_name': fullName,
-          'phone': phone,
-          'role': role,
-          'service_category': serviceCategory,
-        },
-      );
-    } on AuthException catch (e) {
-      _error = e.message;
-      rethrow;
-    } catch (e) {
-      _error = e.toString();
-      rethrow;
-    } finally {
-      _busy = false;
-      notifyListeners();
-    }
-  }
-
-  Future<AuthResponse> signIn({
-    required String email,
-    required String password,
-  }) async {
-    _busy = true;
-    _error = null;
-    notifyListeners();
-
-    try {
-      return await _client.auth.signInWithPassword(
-        email: email,
-        password: password,
-      );
-    } on AuthException catch (e) {
-      _error = e.message;
-      rethrow;
-    } catch (e) {
-      _error = e.toString();
-      rethrow;
-    } finally {
-      _busy = false;
-      notifyListeners();
-    }
   }
 
   Future<void> signOut() async {
-    _busy = true;
-    _error = null;
-    notifyListeners();
+    await _supabase.auth.signOut();
 
-    try {
-      await _client.auth.signOut();
+    _session = null;
+    _profile = null;
 
-      _session = null;
-      _profile = null;
-    } on AuthException catch (e) {
-      _error = e.message;
-      rethrow;
-    } catch (e) {
-      _error = e.toString();
-      rethrow;
-    } finally {
-      _busy = false;
-      notifyListeners();
-    }
-  }
-
-  //=============================
-  // UTILITIES
-  //=============================
-
-  void clearError() {
-    _error = null;
     notifyListeners();
   }
 
-  //=============================
-  // DISPOSE
-  //=============================
+  Future<void> refreshProfile() async {
+    if (_session == null) return;
 
-  @override
-  void dispose() {
-    _authSubscription?.cancel();
-    super.dispose();
+    _loading = true;
+    notifyListeners();
+
+    await _loadProfile();
   }
 }
