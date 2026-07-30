@@ -1,4 +1,68 @@
+import 'dart:typed_data';
 
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
+
+import '../../providers/auth_provider.dart';
+import '../../services/property_service.dart';
+
+import '../widgets/amenities_step.dart';
+import '../widgets/block_configuration_step.dart';
+import '../widgets/location_step.dart';
+import '../widgets/property_info_step.dart';
+import '../widgets/unit_preview_step.dart';
+
+class AddPropertyScreen extends StatefulWidget {
+  const AddPropertyScreen({super.key});
+
+  @override
+  State<AddPropertyScreen> createState() =>
+      _AddPropertyScreenState();
+}
+
+class _AddPropertyScreenState
+    extends State<AddPropertyScreen> {
+
+  final _formKey = GlobalKey<FormState>();
+
+  int _currentStep = 0;
+
+  // Property Information
+  final _propertyNameController = TextEditingController();
+  final _descriptionController = TextEditingController();
+
+  String _propertyType = 'apartment';
+
+  // Location
+  final _countryController = TextEditingController();
+  final _countyController = TextEditingController();
+  final _townController = TextEditingController();
+  final _estateController = TextEditingController();
+  final _streetController = TextEditingController();
+
+  double? _latitude;
+  double? _longitude;
+
+  // Amenities
+  List<String> _selectedAmenities = [];
+
+  // Blocks
+  List<BlockConfiguration> _blocks = [
+    BlockConfiguration(
+      name: 'A',
+      floors: 1,
+      unitsPerFloor: 1,
+    ),
+  ];
+
+  // Generated Units
+  List<Map<String, dynamic>> _generatedUnits = [];
+
+  // Images
+  final List<Uint8List> _images = [];
+
+  bool _saving = false;
 
   @override
   void dispose() {
