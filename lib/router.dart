@@ -11,6 +11,7 @@ import 'screens/tenant/tenant_dashboard.dart';
 import 'screens/tenant/property_list_screen.dart';
 import 'screens/tenant/property_detail_screen.dart';
 
+import 'screens/landlord/landlord_property_details.dart';
 import 'screens/landlord/landlord_dashboard.dart';
 import 'screens/landlord/add_property_screen.dart';
 import 'screens/landlord/pending_requests.dart';
