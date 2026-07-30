@@ -17,23 +17,31 @@ class AmenitiesStep extends StatefulWidget {
 class _AmenitiesStepState extends State<AmenitiesStep> {
   late List<String> _selected;
 
-  static const List<Map<String, dynamic>> _amenities = [
-    {"name": "Parking", "icon": Icons.local_parking},
-    {"name": "Wi-Fi", "icon": Icons.wifi},
-    {"name": "CCTV", "icon": Icons.videocam},
-    {"name": "Security Guard", "icon": Icons.security},
-    {"name": "Electric Fence", "icon": Icons.electric_bolt},
-    {"name": "Swimming Pool", "icon": Icons.pool},
-    {"name": "Gym", "icon": Icons.fitness_center},
-    {"name": "Lift", "icon": Icons.elevator},
-    {"name": "Borehole", "icon": Icons.water_drop},
-    {"name": "Backup Generator", "icon": Icons.power},
-    {"name": "Children Playground", "icon": Icons.child_care},
-    {"name": "Garden", "icon": Icons.yard},
-    {"name": "Laundry Area", "icon": Icons.local_laundry_service},
-    {"name": "Garbage Collection", "icon": Icons.delete_outline},
-    {"name": "Pet Friendly", "icon": Icons.pets},
-    {"name": "Balcony", "icon": Icons.balcony},
+  static const List<String> _allAmenities = [
+    "Wi-Fi",
+    "Parking",
+    "CCTV",
+    "Security Guard",
+    "Electric Fence",
+    "Borehole",
+    "Water Tank",
+    "Swimming Pool",
+    "Gym",
+    "Lift",
+    "Backup Generator",
+    "Children Playground",
+    "Garden",
+    "Balcony",
+    "Laundry Area",
+    "Garbage Collection",
+    "Furnished",
+    "Air Conditioning",
+    "Hot Shower",
+    "Pet Friendly",
+    "Electricity Included",
+    "Water Included",
+    "Internet Included",
+    "Wheelchair Accessible",
   ];
 
   @override
@@ -42,7 +50,7 @@ class _AmenitiesStepState extends State<AmenitiesStep> {
     _selected = List<String>.from(widget.selectedAmenities);
   }
 
-  void _toggle(String amenity) {
+  void _toggleAmenity(String amenity) {
     setState(() {
       if (_selected.contains(amenity)) {
         _selected.remove(amenity);
@@ -57,24 +65,21 @@ class _AmenitiesStepState extends State<AmenitiesStep> {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            "Property Amenities",
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+      child: Wrap(
+        spacing: 10,
+        runSpacing: 10,
+        children: _allAmenities.map((amenity) {
+          final selected = _selected.contains(amenity);
 
-          const SizedBox(height: 8),
-
-          const Text(
-            "Select all amenities available in your property.",
-            style: TextStyle(color: Colors.grey),
-          ),
-
-          const SizedBox(height: 20),
-
-         
+          return FilterChip(
+            label: Text(amenity),
+            selected: selected,
+            showCheckmark: true,
+            selectedColor: Colors.blue.shade100,
+            onSelected: (_) => _toggleAmenity(amenity),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
