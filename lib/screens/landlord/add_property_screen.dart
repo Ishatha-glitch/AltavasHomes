@@ -7,11 +7,11 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/property_service.dart';
 
-import '../widgets/amenities_step.dart';
-import '../widgets/block_configuration_step.dart';
-import '../widgets/location_step.dart';
-import '../widgets/property_info_step.dart';
-import '../widgets/unit_preview_step.dart';
+import 'widgets/amenities_step.dart';
+import 'widgets/block_configuration_step.dart';
+import 'widgets/location_step.dart';
+import 'widgets/property_info_step.dart';
+import 'widgets/unit_preview_step.dart';
 
 class AddPropertyScreen extends StatefulWidget {
   const AddPropertyScreen({super.key});
