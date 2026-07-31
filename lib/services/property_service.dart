@@ -57,22 +57,31 @@ class PropertyService {
         .eq('id', propertyId);
   }
 
-  // Save Blocks
-  static Future<void> saveBlocks({
+  // Save Blocks — returns a map of block name -> generated block id,
+  // since property_units.block_id is a required foreign key.
+  static Future<Map<String, String>> saveBlocks({
     required String propertyId,
     required List<Map<String, dynamic>> blocks,
   }) async {
-    if (blocks.isEmpty) return;
+    final Map<String, String> blockIds = {};
+
+    if (blocks.isEmpty) return blockIds;
 
     for (final block in blocks) {
-      await _supabase
+      final response = await _supabase
           .from('property_blocks')
           .insert({
             'property_id': propertyId,
-            'name': block['name'],
+            'block_name': block['name'],
             'floors': block['floors'],
-          });
+          })
+          .select()
+          .single();
+
+      blockIds[block['name']] = response['id'] as String;
     }
+
+    return blockIds;
   }
 
   // Save Units
