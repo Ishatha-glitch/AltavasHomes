@@ -214,6 +214,8 @@ class _AddPropertyScreenState
         );
       }
 
+      Map<String, String> blockIds = {};
+
       if (_blocks.isNotEmpty) {
         final blockRows = _blocks
             .map(
@@ -224,16 +226,26 @@ class _AddPropertyScreenState
             )
             .toList();
 
-        await PropertyService.saveBlocks(
+        blockIds = await PropertyService.saveBlocks(
           propertyId: propertyId,
           blocks: blockRows,
         );
       }
 
       if (_generatedUnits.isNotEmpty) {
+        final unitRows = _generatedUnits.map((unit) {
+          return {
+            "block_id": blockIds[unit["block"]],
+            "unit_number": unit["unit_number"],
+            "floor": unit["floor"],
+            "status":
+                (unit["occupied"] == true) ? "occupied" : "vacant",
+          };
+        }).toList();
+
         await PropertyService.saveUnits(
           propertyId: propertyId,
-          units: _generatedUnits,
+          units: unitRows,
         );
       }
 
