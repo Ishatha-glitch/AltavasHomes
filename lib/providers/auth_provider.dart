@@ -72,6 +72,7 @@ class AuthProvider extends ChangeNotifier {
       _profile = Map<String, dynamic>.from(response);
     } catch (e) {
       debugPrint('Profile loading error: $e');
+      _error = 'Could not load your profile: $e';
       _profile = null;
     }
 
@@ -93,6 +94,11 @@ class AuthProvider extends ChangeNotifier {
         password: password,
       );
 
+      // Don't rely on the onAuthStateChange listener having already
+      // fired by this point — read the session directly so
+      // refreshProfile() doesn't see a stale null and bail out.
+      _session = _supabase.auth.currentSession;
+
       await refreshProfile();
 
       return true;
@@ -109,13 +115,13 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<bool> signUp({
-  required String email,
-  required String password,
-  required String fullName,
-  required String phone,
-  required String role,
-  String? serviceCategory,
-}) async {
+    required String email,
+    required String password,
+    required String fullName,
+    required String phone,
+    required String role,
+    String? serviceCategory,
+  }) async {
     try {
       _busy = true;
       _error = null;
@@ -125,14 +131,15 @@ class AuthProvider extends ChangeNotifier {
         email: email,
         password: password,
         data: {
-  'full_name': fullName,
-  'phone': phone,
-  'role': role,
-  'service_category': serviceCategory,
-},
+          'full_name': fullName,
+          'phone': phone,
+          'role': role,
+          'service_category': serviceCategory,
+        },
       );
 
       if (response.user != null) {
+        _session = _supabase.auth.currentSession;
         await refreshProfile();
       }
 
