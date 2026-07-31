@@ -69,6 +69,7 @@ class BlockConfigurationStep extends StatelessWidget {
                                 labelText: "Block Name",
                                 border: OutlineInputBorder(),
                               ),
+                              onChanged: (_) => onChanged(List.from(blocks)),
                             ),
                           ),
 
@@ -94,6 +95,7 @@ class BlockConfigurationStep extends StatelessWidget {
                           labelText: "Number of Floors",
                           border: OutlineInputBorder(),
                         ),
+                        onChanged: (_) => onChanged(List.from(blocks)),
                       ),
 
                       const SizedBox(height: 16),
@@ -105,6 +107,7 @@ class BlockConfigurationStep extends StatelessWidget {
                           labelText: "Units Per Floor",
                           border: OutlineInputBorder(),
                         ),
+                        onChanged: (_) => onChanged(List.from(blocks)),
                       ),
                     ],
                   ),
