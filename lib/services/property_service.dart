@@ -157,4 +157,11 @@ class PropertyService {
         })
         .eq('id', propertyId);
   }
+  // Delete Property (cascades to blocks/units via FK)
+  static Future<void> deleteProperty(String propertyId) async {
+    await _supabase
+        .from('properties')
+        .delete()
+        .eq('id', propertyId);
+  }
 }
