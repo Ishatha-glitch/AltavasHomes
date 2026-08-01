@@ -160,19 +160,41 @@ class _AddPropertyScreenState
       return;
     }
 
-    if (_generatedUnits.isEmpty &&
-        (_propertyType == "apartment" ||
-            _propertyType == "flats" ||
-            _propertyType == "hostel")) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            "Generate units before publishing.",
-          ),
-        ),
-      );
-      return;
-    }
+    if (_generatedUnits.isNotEmpty) {
+        final missingRent = _generatedUnits.any(
+          (unit) => unit["monthly_rent"] == null,
+        );
+
+        if (missingRent) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Set the monthly rent on the Units step before publishing.',
+                ),
+              ),
+            );
+          }
+          setState(() => _publishing = false);
+          return;
+        }
+
+        final unitRows = _generatedUnits.map((unit) {
+          return {
+            "block_id": blockIds[unit["block"]],
+            "unit_number": unit["unit_number"],
+            "floor": unit["floor"],
+            "status":
+                (unit["occupied"] == true) ? "occupied" : "vacant",
+            "monthly_rent": unit["monthly_rent"],
+          };
+        }).toList();
+
+        await PropertyService.saveUnits(
+          propertyId: propertyId,
+          units: unitRows,
+        );
+      }
 
     setState(() {
       _saving = true;
