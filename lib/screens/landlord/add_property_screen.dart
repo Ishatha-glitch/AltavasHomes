@@ -124,14 +124,8 @@ class _AddPropertyScreenState
             "unit_number":
                 "$blockName${floor.toString()}${unit.toString().padLeft(2, '0')}",
             "occupied": false,
+            "monthly_rent": null,
           });
-        }
-      }
-    }
-
-    setState(() {
-      _generatedUnits = units;
-    });
   }
 
   void _nextStep() {
