@@ -113,6 +113,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                   : const Text('Save Changes'),
             ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: () async {
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Sign out?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Sign Out'),
+                      ),
+                    ],
+                  ),
+                );
+                if (confirmed == true && context.mounted) {
+                  await context.read<AuthProvider>().signOut();
+                }
+              },
+              icon: const Icon(Icons.logout),
+              label: const Text('Sign Out'),
+            ),
           ],
         ),
       ),
