@@ -14,6 +14,7 @@ class PendingRequestsScreen extends StatefulWidget {
 class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
   List<Map<String, dynamic>> _requests = [];
   bool _loading = true;
+  String? _actingOnId;
 
   @override
   void initState() {
@@ -33,11 +34,11 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
       final data = await Db.client
           .from('leases')
           .select(
-            '*, properties(id, title, address, currency, rent_amount), profiles!leases_tenant_id_fkey(full_name)',
+            '*, property_units(unit_number, floor, monthly_rent, properties(property_name, estate)), '
+            'profiles!leases_tenant_id_fkey(full_name, phone)',
           )
           .eq('landlord_id', profile['id'])
           .eq('active', false)
-          .isFilter('ended_at', null)
           .order('created_at', ascending: false);
 
       if (!mounted) return;
@@ -49,44 +50,59 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
       if (!mounted) return;
       setState(() => _loading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not load requests. Check your connection.')),
+        SnackBar(content: Text('Could not load requests: $e')),
       );
     }
   }
 
   Future<void> _approve(Map<String, dynamic> request) async {
+    setState(() => _actingOnId = request['id']);
     try {
-      await Db.client.from('leases').update({'active': true}).eq('id', request['id']);
       await Db.client
-          .from('properties')
-          .update({'status': 'occupied'})
-          .eq('id', request['properties']['id']);
+          .from('leases')
+          .update({'active': true})
+          .eq('id', request['id']);
+
+      await Db.client
+          .from('property_units')
+          .update({
+            'status': 'occupied',
+            'tenant_id': request['tenant_id'],
+          })
+          .eq('id', request['unit_id']);
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Request approved.')),
+      );
       _load();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not approve. Check your connection.')),
+        SnackBar(content: Text('Could not approve: $e')),
       );
+    } finally {
+      if (mounted) setState(() => _actingOnId = null);
     }
   }
 
   Future<void> _reject(Map<String, dynamic> request) async {
+    setState(() => _actingOnId = request['id']);
     try {
       await Db.client.from('leases').delete().eq('id', request['id']);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Request declined.')),
+      );
       _load();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not reject. Check your connection.')),
+        SnackBar(content: Text('Could not decline: $e')),
       );
+    } finally {
+      if (mounted) setState(() => _actingOnId = null);
     }
-  }
-
-  String _formatAmount(dynamic amount) {
-    final value = (amount as num?)?.toDouble() ?? 0;
-    return value == value.roundToDouble()
-        ? value.toInt().toString()
-        : value.toStringAsFixed(2);
   }
 
   @override
@@ -104,8 +120,10 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
                     itemCount: _requests.length,
                     itemBuilder: (context, i) {
                       final r = _requests[i];
-                      final property = r['properties'];
-                      final tenantName = r['profiles']?['full_name'] ?? 'Unknown';
+                      final unit = r['property_units'];
+                      final property = unit?['properties'];
+                      final tenant = r['profiles'];
+                      final busy = _actingOnId == r['id'];
 
                       return Card(
                         margin: const EdgeInsets.only(bottom: 14),
@@ -115,32 +133,49 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(property?['title'] ?? '', style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
-                              Text(property?['address'] ?? '', style: const TextStyle(color: Colors.grey)),
-                              const SizedBox(height: 6),
-                              Text('Requested by: $tenantName', style: const TextStyle(fontWeight: FontWeight.w600)),
-                              const SizedBox(height: 4),
-                              Text('Proposed rent: ${property?['currency'] ?? ''} ${_formatAmount(r['monthly_rent'])}'),
-                              const SizedBox(height: 12),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: OutlinedButton(
-                                      onPressed: () => _reject(r),
-                                      style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFFEF4444)),
-                                      child: const Text('Reject'),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: ElevatedButton(
-                                      onPressed: () => _approve(r),
-                                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF16A34A)),
-                                      child: const Text('Approve', style: TextStyle(color: Colors.white)),
-                                    ),
-                                  ),
-                                ],
+                              Text(
+                                property?['property_name'] ?? '',
+                                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
                               ),
+                              Text(
+                                'Unit ${unit?['unit_number'] ?? ''} · Floor ${unit?['floor'] ?? '-'}',
+                                style: const TextStyle(color: Colors.grey),
+                              ),
+                              const SizedBox(height: 6),
+                              Text('Requested by: ${tenant?['full_name'] ?? 'Unknown'}', style: const TextStyle(fontWeight: FontWeight.w600)),
+                              if (tenant?['phone'] != null)
+                                Text(tenant['phone'], style: const TextStyle(color: Colors.grey)),
+                              const SizedBox(height: 4),
+                              Text('Proposed rent: KES ${r['monthly_rent']}'),
+                              const SizedBox(height: 12),
+                              if (busy)
+                                const Center(
+                                  child: SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  ),
+                                )
+                              else
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: OutlinedButton(
+                                        onPressed: () => _reject(r),
+                                        style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFFEF4444)),
+                                        child: const Text('Reject'),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: ElevatedButton(
+                                        onPressed: () => _approve(r),
+                                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF16A34A)),
+                                        child: const Text('Approve', style: TextStyle(color: Colors.white)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                             ],
                           ),
                         ),
