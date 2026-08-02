@@ -14,8 +14,8 @@ class MpesaService {
   }) async {
     try {
       final response = await _supabase.functions.invoke(
-  'hyper-api',',
-        body: {
+  'hyper-api',
+  body: {
           'phone': phoneNumber,
           'amount': amount,
           'lease_id': leaseId,
