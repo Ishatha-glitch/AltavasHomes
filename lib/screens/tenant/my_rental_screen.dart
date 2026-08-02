@@ -288,4 +288,22 @@ class _MyRentalScreenState extends State<MyRentalScreen> {
                               subtitle: Text(
                                 p['receipt_number'] != null
                                     ? 'Receipt: ${p['receipt_number']}'
-                                    : (p['created_at'] ?? '').toString().
+                                    : (p['created_at'] ?? '').toString().split('T').first,
+                              ),
+                              trailing: Text(
+                                (p['status'] ?? 'pending').toString().toUpperCase(),
+                                style: TextStyle(
+                                  color: _statusColor(p['status']),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          );
+                        }),
+                    ],
+                  ),
+                ),
+    );
+  }
+}
