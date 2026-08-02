@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../providers/auth_provider.dart';
 import '../../services/mpesa_service.dart';
+import '../../widgets/rent_progress_bar.dart';
 
 class MyRentalScreen extends StatefulWidget {
   const MyRentalScreen({super.key});
@@ -203,6 +204,38 @@ class _MyRentalScreenState extends State<MyRentalScreen> {
 
                       const SizedBox(height: 20),
 
+                      Builder(builder: (context) {
+                        final now = DateTime.now();
+                        final rent = (_lease!['monthly_rent'] as num).toDouble();
+
+                        final paidThisMonth = _payments
+                            .where((p) {
+                              if (p['status'] != 'completed' || p['paid_at'] == null) {
+                                return false;
+                              }
+                              final paidAt = DateTime.tryParse(p['paid_at']);
+                              return paidAt != null &&
+                                  paidAt.year == now.year &&
+                                  paidAt.month == now.month;
+                            })
+                            .fold<double>(0, (sum, p) => sum + (p['amount'] as num).toDouble());
+
+                        final percent = rent > 0 ? (paidThisMonth / rent * 100) : 0.0;
+
+                        return Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: RentProgressBar(
+                              percent: percent,
+                              amountPaid: paidThisMonth,
+                              totalRent: rent,
+                            ),
+                          ),
+                        );
+                      }),
+
+                      const SizedBox(height: 20),
+
                       const Text(
                         'Pay Rent',
                         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
@@ -255,22 +288,4 @@ class _MyRentalScreenState extends State<MyRentalScreen> {
                               subtitle: Text(
                                 p['receipt_number'] != null
                                     ? 'Receipt: ${p['receipt_number']}'
-                                    : (p['created_at'] ?? '').toString().split('T').first,
-                              ),
-                              trailing: Text(
-                                (p['status'] ?? 'pending').toString().toUpperCase(),
-                                style: TextStyle(
-                                  color: _statusColor(p['status']),
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
-                          );
-                        }),
-                    ],
-                  ),
-                ),
-    );
-  }
-}
+                                    : (p['created_at'] ?? '').toString().
