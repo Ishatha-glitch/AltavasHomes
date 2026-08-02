@@ -139,6 +139,10 @@ GoRouter buildRouter(AuthProvider auth) {
           );
         },
       ),
+      GoRoute(
+        path: '/tenant/my-rental',
+        builder: (_, __) => const MyRentalScreen(),
+      ),
 
       //--------------------------
       // LANDLORD
