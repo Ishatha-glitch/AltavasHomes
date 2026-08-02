@@ -10,6 +10,7 @@ import 'screens/auth/role_select_screen.dart';
 import 'screens/tenant/tenant_dashboard.dart';
 import 'screens/tenant/property_list_screen.dart';
 import 'screens/tenant/property_detail_screen.dart';
+import 'screens/tenant/my_rental_screen.dart';
 
 import 'screens/landlord/landlord_property_details.dart';
 import 'screens/landlord/landlord_dashboard.dart';
