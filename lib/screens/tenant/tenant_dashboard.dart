@@ -54,16 +54,9 @@ class TenantDashboard extends StatelessWidget {
               ),
               trailing: const Icon(Icons.chevron_right),
               onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      "Rental dashboard coming soon.",
-                    ),
-                  ),
-                );
+                context.push('/tenant/my-rental');
               },
             ),
-          ),
 
           const SizedBox(height: 15),
 
