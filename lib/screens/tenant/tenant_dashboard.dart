@@ -57,6 +57,7 @@ class TenantDashboard extends StatelessWidget {
                 context.push('/tenant/my-rental');
               },
             ),
+          ),
 
           const SizedBox(height: 15),
 
