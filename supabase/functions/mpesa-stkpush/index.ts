@@ -56,7 +56,7 @@ serve(async (req) => {
           PartyA: phone,
           PartyB: SHORTCODE,
           PhoneNumber: phone,
-          CallBackURL: `${SUPABASE_URL}/functions/v1/mpesa-callback`,
+          CallBackURL: `${SUPABASE_URL}/functions/v1/hyper-responder`,
           AccountReference: account_ref || "ALTAVAS-RENT",
           TransactionDesc: "AltavasHomes Rent Payment",
         }),
