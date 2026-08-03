@@ -56,8 +56,16 @@ class PropertyInfoStep extends StatelessWidget {
               child: Text("Flats"),
             ),
             DropdownMenuItem(
-              value: "house",
+              value: "standalone_house",
               child: Text("Standalone House"),
+            ),
+            DropdownMenuItem(
+              value: "maisonette",
+              child: Text("Maisonette"),
+            ),
+            DropdownMenuItem(
+              value: "townhouse",
+              child: Text("Townhouse"),
             ),
             DropdownMenuItem(
               value: "hostel",
@@ -66,6 +74,18 @@ class PropertyInfoStep extends StatelessWidget {
             DropdownMenuItem(
               value: "commercial",
               child: Text("Commercial Building"),
+            ),
+            DropdownMenuItem(
+              value: "office",
+              child: Text("Office"),
+            ),
+            DropdownMenuItem(
+              value: "shop",
+              child: Text("Shop"),
+            ),
+            DropdownMenuItem(
+              value: "warehouse",
+              child: Text("Warehouse"),
             ),
           ],
           onChanged: onPropertyTypeChanged,
@@ -90,7 +110,7 @@ class PropertyInfoStep extends StatelessWidget {
           child: const Padding(
             padding: EdgeInsets.all(16),
             child: Text(
-              "Tip:\n\nFor apartments and flats you'll configure blocks and house numbers in the next step.",
+              "Tip:\n\nYou'll add each unit (house) individually with its own rent in the Units step.",
               style: TextStyle(fontSize: 15),
             ),
           ),
