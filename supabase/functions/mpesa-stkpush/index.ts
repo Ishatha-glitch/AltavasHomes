@@ -6,6 +6,8 @@ const supabase = createClient(
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
 );
 
+const JSON_HEADERS = { "Content-Type": "application/json" };
+
 serve(async (req) => {
   try {
     const { phone, amount, lease_id, tenant_id, landlord_id, account_ref } =
@@ -17,7 +19,7 @@ serve(async (req) => {
           success: false,
           error: "phone, amount, lease_id, tenant_id and landlord_id are all required",
         }),
-        { status: 400 },
+        { status: 400, headers: JSON_HEADERS },
       );
     }
 
@@ -79,12 +81,12 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({ success: true, result }),
-      { status: 200, headers: { "Content-Type": "application/json" } },
+      { status: 200, headers: JSON_HEADERS },
     );
   } catch (error) {
     return new Response(
       JSON.stringify({ success: false, error: error.message }),
-      { status: 400, headers: { "Content-Type": "application/json" } },
+      { status: 400, headers: JSON_HEADERS },
     );
   }
 });
