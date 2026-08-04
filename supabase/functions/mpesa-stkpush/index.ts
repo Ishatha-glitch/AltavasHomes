@@ -77,11 +77,14 @@ serve(async (req) => {
       transaction_reference: result.CheckoutRequestID ?? result.ConversationID ?? null,
     });
 
-    return new Response(JSON.stringify({ success: true, result }), { status: 200 });
+    return new Response(
+      JSON.stringify({ success: true, result }),
+      { status: 200, headers: { "Content-Type": "application/json" } },
+    );
   } catch (error) {
     return new Response(
       JSON.stringify({ success: false, error: error.message }),
-      { status: 400 },
+      { status: 400, headers: { "Content-Type": "application/json" } },
     );
   }
 });
