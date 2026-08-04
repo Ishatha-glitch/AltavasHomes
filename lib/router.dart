@@ -6,11 +6,13 @@ import 'providers/auth_provider.dart';
 import 'screens/auth/sign_in_screen.dart';
 import 'screens/auth/sign_up_screen.dart';
 import 'screens/auth/role_select_screen.dart';
+import 'screens/auth/forgot_password_screen.dart';
 
 import 'screens/tenant/tenant_dashboard.dart';
 import 'screens/tenant/property_list_screen.dart';
 import 'screens/tenant/property_detail_screen.dart';
 import 'screens/tenant/my_rental_screen.dart';
+import 'screens/tenant/maintenance_requests_screen.dart';
 
 import 'screens/landlord/landlord_property_details.dart';
 import 'screens/landlord/landlord_dashboard.dart';
@@ -39,6 +41,7 @@ GoRouter buildRouter(AuthProvider auth) {
         '/signin',
         '/signup',
         '/role-select',
+        '/forgot-password',
       ].contains(state.matchedLocation);
 
       if (!loggedIn) {
@@ -111,6 +114,11 @@ GoRouter buildRouter(AuthProvider auth) {
         builder: (_, __) => const RoleSelectScreen(),
       ),
 
+      GoRoute(
+        path: '/forgot-password',
+        builder: (_, __) => const ForgotPasswordScreen(),
+      ),
+
       //--------------------------
       // TENANT
       //--------------------------
@@ -142,6 +150,11 @@ GoRouter buildRouter(AuthProvider auth) {
       GoRoute(
         path: '/tenant/my-rental',
         builder: (_, __) => const MyRentalScreen(),
+      ),
+
+      GoRoute(
+        path: '/tenant/maintenance',
+        builder: (_, __) => const MaintenanceRequestsScreen(),
       ),
 
       //--------------------------
