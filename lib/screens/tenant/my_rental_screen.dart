@@ -16,6 +16,7 @@ class MyRentalScreen extends StatefulWidget {
 class _MyRentalScreenState extends State<MyRentalScreen> {
   final supabase = Supabase.instance.client;
   final _phoneController = TextEditingController();
+  final _amountController = TextEditingController();
 
   bool _loading = true;
   Map<String, dynamic>? _lease;
@@ -33,7 +34,23 @@ class _MyRentalScreenState extends State<MyRentalScreen> {
   @override
   void dispose() {
     _phoneController.dispose();
+    _amountController.dispose();
     super.dispose();
+  }
+
+  double _balanceOwed(Map<String, dynamic> lease, List<Map<String, dynamic>> payments) {
+    final rent = (lease['monthly_rent'] as num).toDouble();
+    final now = DateTime.now();
+
+    final paidThisMonth = payments
+        .where((p) {
+          if (p['status'] != 'completed' || p['paid_at'] == null) return false;
+          final paidAt = DateTime.tryParse(p['paid_at']);
+          return paidAt != null && paidAt.year == now.year && paidAt.month == now.month;
+        })
+        .fold<double>(0, (sum, p) => sum + (p['amount'] as num).toDouble());
+
+    return (rent - paidThisMonth).clamp(0, rent);
   }
 
   Future<void> _load() async {
@@ -71,6 +88,11 @@ class _MyRentalScreenState extends State<MyRentalScreen> {
         _payments = payments;
         _loading = false;
       });
+
+      if (leaseResult != null) {
+        final balance = _balanceOwed(leaseResult, payments);
+        _amountController.text = balance > 0 ? balance.toStringAsFixed(0) : '';
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() => _loading = false);
@@ -93,13 +115,21 @@ class _MyRentalScreenState extends State<MyRentalScreen> {
       return;
     }
 
+    final amount = double.tryParse(_amountController.text.trim());
+    if (amount == null || amount <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter a valid amount to pay.')),
+      );
+      return;
+    }
+
     setState(() => _paying = true);
 
     final profile = context.read<AuthProvider>().profile!;
 
     final result = await MpesaService.initiatePayment(
       phoneNumber: phone,
-      amount: (_lease!['monthly_rent'] as num).toDouble(),
+      amount: amount,
       leaseId: _lease!['id'],
       tenantId: profile['id'],
       landlordId: _lease!['landlord_id'],
@@ -205,21 +235,9 @@ class _MyRentalScreenState extends State<MyRentalScreen> {
                       const SizedBox(height: 20),
 
                       Builder(builder: (context) {
-                        final now = DateTime.now();
                         final rent = (_lease!['monthly_rent'] as num).toDouble();
-
-                        final paidThisMonth = _payments
-                            .where((p) {
-                              if (p['status'] != 'completed' || p['paid_at'] == null) {
-                                return false;
-                              }
-                              final paidAt = DateTime.tryParse(p['paid_at']);
-                              return paidAt != null &&
-                                  paidAt.year == now.year &&
-                                  paidAt.month == now.month;
-                            })
-                            .fold<double>(0, (sum, p) => sum + (p['amount'] as num).toDouble());
-
+                        final balance = _balanceOwed(_lease!, _payments);
+                        final paidThisMonth = rent - balance;
                         final percent = rent > 0 ? (paidThisMonth / rent * 100) : 0.0;
 
                         return Card(
@@ -240,6 +258,18 @@ class _MyRentalScreenState extends State<MyRentalScreen> {
                         'Pay Rent',
                         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                       ),
+                      const SizedBox(height: 12),
+
+                      TextFormField(
+                        controller: _amountController,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: false),
+                        decoration: const InputDecoration(
+                          labelText: 'Amount to Pay (KES)',
+                          helperText: 'You can pay in part or in full',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+
                       const SizedBox(height: 12),
 
                       TextFormField(
