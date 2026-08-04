@@ -70,13 +70,7 @@ class TenantDashboard extends StatelessWidget {
               ),
               trailing: const Icon(Icons.chevron_right),
               onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      "Payments module coming soon.",
-                    ),
-                  ),
-                );
+                context.push('/tenant/my-rental');
               },
             ),
           ),
@@ -92,13 +86,7 @@ class TenantDashboard extends StatelessWidget {
               ),
               trailing: const Icon(Icons.chevron_right),
               onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      "Maintenance module coming soon.",
-                    ),
-                  ),
-                );
+                context.push('/tenant/maintenance');
               },
             ),
           ),
