@@ -18,6 +18,7 @@ import 'screens/landlord/landlord_property_details.dart';
 import 'screens/landlord/landlord_dashboard.dart';
 import 'screens/landlord/add_property_screen.dart';
 import 'screens/landlord/pending_requests.dart';
+import 'screens/landlord/edit_property_screen.dart';
 
 import 'screens/service_provider/service_provider_dashboard.dart';
 
