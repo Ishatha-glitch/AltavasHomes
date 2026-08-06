@@ -22,7 +22,7 @@ class _LandlordDashboardState
   bool _loading = true;
 
   List<Map<String, dynamic>> properties = [];
-  Map<String, int> _unitCounts = {};
+  Map<String, Map<String, int>> _unitStats = {}; // propertyId -> {total, occupied, vacant}
 
   @override
   void initState() {
@@ -31,6 +31,8 @@ class _LandlordDashboardState
   }
 
   Future<void> loadProperties() async {
+    setState(() => _loading = true);
+
     try {
       final user = supabase.auth.currentUser!;
 
@@ -42,19 +44,28 @@ class _LandlordDashboardState
 
       final props = List<Map<String, dynamic>>.from(result);
 
-      Map<String, int> counts = {};
+      Map<String, Map<String, int>> stats = {};
 
       if (props.isNotEmpty) {
         final ids = props.map((p) => p['id'] as String).toList();
 
-        final countRows = await supabase
-            .from('property_unit_counts')
-            .select()
+        final unitRows = await supabase
+            .from('property_units')
+            .select('property_id, status')
             .filter('property_id', 'in', '(${ids.join(",")})');
 
-        for (final row in List<Map<String, dynamic>>.from(countRows)) {
-          counts[row['property_id'] as String] =
-              (row['total_units'] as num?)?.toInt() ?? 0;
+        for (final row in List<Map<String, dynamic>>.from(unitRows)) {
+          final propId = row['property_id'] as String;
+          final occupied = row['status'] == 'occupied';
+
+          final current = stats[propId] ?? {'total': 0, 'occupied': 0, 'vacant': 0};
+          current['total'] = (current['total'] ?? 0) + 1;
+          if (occupied) {
+            current['occupied'] = (current['occupied'] ?? 0) + 1;
+          } else {
+            current['vacant'] = (current['vacant'] ?? 0) + 1;
+          }
+          stats[propId] = current;
         }
       }
 
@@ -62,7 +73,7 @@ class _LandlordDashboardState
 
       setState(() {
         properties = props;
-        _unitCounts = counts;
+        _unitStats = stats;
         _loading = false;
       });
     } catch (e) {
@@ -202,16 +213,14 @@ class _LandlordDashboardState
                       ],
                     )
                   : ListView.builder(
-                      padding:
-                          const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(16),
                       itemCount: properties.length,
                       itemBuilder: (context, index) {
 
-                        final property =
-                            properties[index];
+                        final property = properties[index];
 
-                        final units =
-                            _unitCounts[property['id']] ?? 0;
+                        final stats = _unitStats[property['id']] ??
+                            {'total': 0, 'occupied': 0, 'vacant': 0};
 
                         return Dismissible(
                           key: ValueKey(property['id']),
@@ -238,12 +247,15 @@ class _LandlordDashboardState
                               ),
 
                               title: Text(
-                                property["property_name"] ??
-                                    "",
+                                property["property_name"] ?? "",
                               ),
 
                               subtitle: Text(
-                                "${property["property_type"] ?? ""} · $units units · ${property["status"] ?? "draft"}",
+                                "${property["property_type"] ?? ""} · "
+                                "${stats['total']} units · "
+                                "${stats['occupied']} occupied · "
+                                "${stats['vacant']} vacant · "
+                                "${property["status"] ?? "draft"}",
                               ),
 
                               trailing: const Icon(
