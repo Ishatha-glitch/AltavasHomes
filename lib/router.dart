@@ -185,6 +185,19 @@ GoRouter buildRouter(AuthProvider auth) {
     );
   },
 ),
+      GoRoute(
+        path: '/landlord/edit-property',
+        builder: (context, state) {
+          if (state.extra == null ||
+              state.extra is! Map<String, dynamic>) {
+            return const NotFoundScreen();
+          }
+
+          return EditPropertyScreen(
+            property: state.extra as Map<String, dynamic>,
+          );
+        },
+      ),
       
       GoRoute(
         path: '/landlord/requests',
