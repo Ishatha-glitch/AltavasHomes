@@ -1,4 +1,4 @@
-p00pimport 'dart:typed_data';
+import 'dart:typed_data';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -40,6 +40,33 @@ class PropertyService {
         .single();
 
     return response['id'];
+  }
+
+  // Update Property
+  static Future<void> updateProperty({
+    required String propertyId,
+    required String propertyName,
+    required String propertyType,
+    required String description,
+    required String county,
+    required String town,
+    required String estate,
+    required String street,
+    required List<String> amenities,
+  }) async {
+    await _supabase
+        .from('properties')
+        .update({
+          'property_name': propertyName,
+          'property_type': propertyType,
+          'description': description,
+          'county': county,
+          'town': town,
+          'estate': estate,
+          'street': street,
+          'amenities': amenities,
+        })
+        .eq('id', propertyId);
   }
 
   // Save Amenities
@@ -157,6 +184,7 @@ class PropertyService {
         })
         .eq('id', propertyId);
   }
+
   // Delete Property (cascades to blocks/units via FK)
   static Future<void> deleteProperty(String propertyId) async {
     await _supabase
@@ -165,29 +193,3 @@ class PropertyService {
         .eq('id', propertyId);
   }
 }
-// Update Property
-  static Future<void> updateProperty({
-    required String propertyId,
-    required String propertyName,
-    required String propertyType,
-    required String description,
-    required String county,
-    required String town,
-    required String estate,
-    required String street,
-    required List<String> amenities,
-  }) async {
-    await _supabase
-        .from('properties')
-        .update({
-          'property_name': propertyName,
-          'property_type': propertyType,
-          'description': description,
-          'county': county,
-          'town': town,
-          'estate': estate,
-          'street': street,
-          'amenities': amenities,
-        })
-        .eq('id', propertyId);
-  }
