@@ -204,6 +204,11 @@ GoRouter buildRouter(AuthProvider auth) {
         path: '/landlord/requests',
         builder: (_, __) => const PendingRequestsScreen(),
       ),
+      
+     GoRoute(
+        path: '/landlord/payments',
+        builder: (_, __) => const TenantPaymentsScreen(),
+      ), 
 
       //--------------------------
       // SERVICE PROVIDER
