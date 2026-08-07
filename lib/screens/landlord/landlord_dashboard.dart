@@ -173,6 +173,11 @@ class _LandlordDashboardState
             onPressed: () => context.push('/landlord/requests'),
           ),
           IconButton(
+            icon: const Icon(Icons.bar_chart),
+            tooltip: 'Tenant Payments',
+            onPressed: () => context.push('/landlord/payments'),
+          ),
+          IconButton(
             icon: const Icon(Icons.person_outline),
             tooltip: 'Profile',
             onPressed: () => context.push('/profile'),
