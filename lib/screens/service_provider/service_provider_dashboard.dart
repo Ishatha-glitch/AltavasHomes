@@ -96,6 +96,11 @@ class _ServiceProviderDashboardState extends State<ServiceProviderDashboard> {
         title: Text('Hi $firstName 👋'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.chat_bubble_outline, color: Colors.white),
+            tooltip: 'Messages',
+            onPressed: () => context.push('/messages'),
+          ),
+          IconButton(
             icon: const Icon(Icons.person_outline, color: Colors.white),
             tooltip: 'My profile',
             onPressed: () => context.push('/profile'),
