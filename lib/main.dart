@@ -44,38 +44,37 @@ Future<void> main() async {
 }
 
 class AltavasHomesApp extends StatelessWidget {
+class AltavasHomesApp extends StatelessWidget {
   const AltavasHomesApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => AuthProvider(),
-      child: Consumer<AuthProvider>(
-        builder: (context, authProvider, _) {
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+      ],
+      child: Consumer2<AuthProvider, ThemeProvider>(
+        builder: (context, authProvider, themeProvider, _) {
           return MaterialApp.router(
             title: 'AltavasHomes',
             debugShowCheckedModeBanner: false,
-
-            // Light Theme
             theme: ThemeData(
               useMaterial3: true,
               colorSchemeSeed: const Color(0xFF2563EB),
               brightness: Brightness.light,
               scaffoldBackgroundColor: Colors.white,
-
               appBarTheme: const AppBarTheme(
                 elevation: 0,
                 centerTitle: true,
                 backgroundColor: Color(0xFF2563EB),
                 foregroundColor: Colors.white,
               ),
-
               inputDecorationTheme: InputDecorationTheme(
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-
               elevatedButtonTheme: ElevatedButtonThemeData(
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 50),
@@ -85,6 +84,19 @@ class AltavasHomesApp extends StatelessWidget {
                 ),
               ),
             ),
+            darkTheme: ThemeData(
+              useMaterial3: true,
+              brightness: Brightness.dark,
+              colorSchemeSeed: const Color(0xFF2563EB),
+            ),
+            themeMode: themeProvider.themeMode,
+            routerConfig: buildRouter(authProvider),
+          );
+        },
+      ),
+    );
+  }
+}
 
             // Dark Theme
             darkTheme: ThemeData(
