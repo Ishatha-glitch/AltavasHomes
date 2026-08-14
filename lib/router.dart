@@ -107,6 +107,38 @@ GoRouter buildRouter(AuthProvider auth) {
       ),
 
       GoRoute(
+        path: '/messages',
+        builder: (_, __) => const ConversationsListScreen(),
+      ),
+
+      GoRoute(
+        path: '/chat',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          if (extra == null) return const NotFoundScreen();
+
+          return ChatScreen(
+            conversationId: extra['conversationId'],
+            otherPartyName: extra['otherPartyName'],
+          );
+        },
+      ),
+
+      GoRoute(
+        path: '/service-providers',
+        builder: (context, state) {
+          return ServiceProvidersListScreen(
+            maintenanceRequestId: state.extra as String?,
+          );
+        },
+      ),
+
+      GoRoute(
+        path: '/landlord/maintenance',
+        builder: (_, __) => const LandlordMaintenanceRequestsScreen(),
+      ),
+
+      GoRoute(
         path: '/signup',
         builder: (context, state) {
           final role =
