@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:provider/provider.dart';
-import 'providers/theme_provider.dart';
 
 import 'providers/auth_provider.dart';
+import 'providers/theme_provider.dart';
 import 'router.dart';
 
 Future<void> main() async {
@@ -44,7 +43,6 @@ Future<void> main() async {
 }
 
 class AltavasHomesApp extends StatelessWidget {
-class AltavasHomesApp extends StatelessWidget {
   const AltavasHomesApp({super.key});
 
   @override
@@ -59,22 +57,27 @@ class AltavasHomesApp extends StatelessWidget {
           return MaterialApp.router(
             title: 'AltavasHomes',
             debugShowCheckedModeBanner: false,
+
+            // Light Theme
             theme: ThemeData(
               useMaterial3: true,
               colorSchemeSeed: const Color(0xFF2563EB),
               brightness: Brightness.light,
               scaffoldBackgroundColor: Colors.white,
+
               appBarTheme: const AppBarTheme(
                 elevation: 0,
                 centerTitle: true,
                 backgroundColor: Color(0xFF2563EB),
                 foregroundColor: Colors.white,
               ),
+
               inputDecorationTheme: InputDecorationTheme(
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
+
               elevatedButtonTheme: ElevatedButtonThemeData(
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 50),
@@ -84,19 +87,6 @@ class AltavasHomesApp extends StatelessWidget {
                 ),
               ),
             ),
-            darkTheme: ThemeData(
-              useMaterial3: true,
-              brightness: Brightness.dark,
-              colorSchemeSeed: const Color(0xFF2563EB),
-            ),
-            themeMode: themeProvider.themeMode,
-            routerConfig: buildRouter(authProvider),
-          );
-        },
-      ),
-    );
-  }
-}
 
             // Dark Theme
             darkTheme: ThemeData(
@@ -105,7 +95,7 @@ class AltavasHomesApp extends StatelessWidget {
               colorSchemeSeed: const Color(0xFF2563EB),
             ),
 
-            themeMode: ThemeMode.system,
+            themeMode: themeProvider.themeMode,
 
             routerConfig: buildRouter(authProvider),
           );
