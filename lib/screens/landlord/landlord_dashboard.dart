@@ -187,6 +187,16 @@ class _LandlordDashboardState
             tooltip: 'Sign Out',
             onPressed: _confirmSignOut,
           ),
+          IconButton(
+            icon: const Icon(Icons.build_outlined),
+            tooltip: 'Maintenance Requests',
+            onPressed: () => context.push('/landlord/maintenance'),
+          ),
+          IconButton(
+            icon: const Icon(Icons.chat_bubble_outline),
+            tooltip: 'Messages',
+            onPressed: () => context.push('/messages'),
+          ),
         ],
       ),
 
