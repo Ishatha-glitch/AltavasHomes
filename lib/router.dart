@@ -125,7 +125,10 @@ GoRouter buildRouter(AuthProvider auth) {
           );
         },
       ),
-
+GoRoute(
+        path: '/settings',
+        builder: (_, __) => const SettingsScreen(),
+      ),
       GoRoute(
         path: '/service-providers',
         builder: (context, state) {
