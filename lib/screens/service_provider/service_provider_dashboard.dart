@@ -106,6 +106,10 @@ class _ServiceProviderDashboardState extends State<ServiceProviderDashboard> {
             onPressed: () => context.push('/profile'),
           ),
           IconButton(
+            icon: const Icon(Icons.settings_outlined, color: Colors.white),
+            onPressed: () => context.push('/settings'),
+          ),
+          IconButton(
             icon: const Icon(Icons.logout),
             onPressed: auth.signOut,
           ),
