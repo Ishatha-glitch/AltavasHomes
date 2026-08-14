@@ -90,6 +90,29 @@ class TenantDashboard extends StatelessWidget {
               },
             ),
           ),
+
+        const SizedBox(height: 15),
+
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.handyman_outlined),
+              title: const Text("Find a Service Provider"),
+              subtitle: const Text("For tasks not related to the property"),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push('/service-providers'),
+            ),
+          ),
+
+          const SizedBox(height: 15),
+
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.chat_bubble_outline),
+              title: const Text("Messages"),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push('/messages'),
+            ),
+          ),  
         ],
       ),
     );
