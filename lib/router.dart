@@ -25,6 +25,11 @@ import 'screens/service_provider/service_provider_dashboard.dart';
 
 import 'screens/profile_screen.dart';
 
+import 'screens/messages/conversations_list_screen.dart';
+import 'screens/messages/chat_screen.dart';
+import 'screens/service_providers/service_providers_list_screen.dart';
+import 'screens/landlord/landlord_maintenance_requests_screen.dart';
+
 GoRouter buildRouter(AuthProvider auth) {
   return GoRouter(
     debugLogDiagnostics: true,
