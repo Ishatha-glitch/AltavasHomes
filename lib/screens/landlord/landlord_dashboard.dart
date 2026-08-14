@@ -183,11 +183,6 @@ class _LandlordDashboardState
             onPressed: () => context.push('/profile'),
           ),
           IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Sign Out',
-            onPressed: _confirmSignOut,
-          ),
-          IconButton(
             icon: const Icon(Icons.build_outlined),
             tooltip: 'Maintenance Requests',
             onPressed: () => context.push('/landlord/maintenance'),
@@ -197,6 +192,10 @@ class _LandlordDashboardState
             tooltip: 'Messages',
             onPressed: () => context.push('/messages'),
           ),
+         IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () => context.push('/settings'),
+          ), 
         ],
       ),
 
