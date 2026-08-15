@@ -58,6 +58,14 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
   Future<void> _approve(Map<String, dynamic> request) async {
     setState(() => _actingOnId = request['id']);
     try {
+      // Deactivate any other active leases this tenant already has,
+      // so only the newly approved lease stays active.
+      await Db.client
+          .from('leases')
+          .update({'active': false})
+          .eq('tenant_id', request['tenant_id'])
+          .neq('id', request['id']);
+
       await Db.client
           .from('leases')
           .update({'active': true})
